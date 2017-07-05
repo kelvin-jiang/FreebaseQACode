@@ -1,10 +1,9 @@
 
 public class Main {
-    private static String FILEPATH;
-    private static final int TEST_INDEX = 37;
+    private static final int TEST_INDEX = 237;
 
     public static void main(String args[]) {
-        FILEPATH = args[0];
+        String FILEPATH = args[0];
 
         RetrieveQA retrieval = new RetrieveQA(FILEPATH);
         //int size = retrieval.getSize(); unused
