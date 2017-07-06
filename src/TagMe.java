@@ -1,3 +1,6 @@
+//https://tagme.d4science.org/tagme/ demo site
+//this class uses the API provided by tagme
+
 import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.WebClient;
 import org.json.simple.JSONArray;
