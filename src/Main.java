@@ -3,7 +3,7 @@ public class Main {
     //private static final int TEST_INDEX = 211;
 
     public static void main(String[] args) {
-        /*String FILEPATH = args[0];
+        /*String FILEPATH = args[0]; //take command line argument as JSON file to be read
 
         //retrieve QA from JSON
         RetrieveQA retrieval = new RetrieveQA(FILEPATH);
@@ -23,6 +23,7 @@ public class Main {
         }*/
 
         //MySQL
-
+        FreebaseDB db = new FreebaseDB();
+        System.out.println(db.getFreebaseIDs("York University"));
     }
 }

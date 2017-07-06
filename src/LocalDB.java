@@ -1,6 +1,6 @@
 import java.sql.*;
 
-public class MySQL_DB {
+public class LocalDB {
     private final String DATABASE_NAME = "QAToFreebase_db";
     private final String TABLE_NAME = "freebase_triples";
 
@@ -12,21 +12,19 @@ public class MySQL_DB {
     private Connection connection;
     private ResultSet queryResult;
 
-    public MySQL_DB() {
+    public LocalDB() {
         connection = connectDatabase(dbDriver, dbURL, dbUser, dbPass);
-            String command = "CREATE TABLE " + TABLE_NAME +
+            updateTable("CREATE TABLE " + TABLE_NAME +
                     "(subjectID VARCHAR(255)," +
                     "predicate VARCHAR(255)," +
                     "objectID VARCHAR(255)," +
                     "rowID INTEGER" +
                     "question VARCHAR(255)" +
                     "answer VARCHAR(255)" +
-                    "yn CHAR(1))";
-
-            updateTable(command);
+                    "yn CHAR(1))");
     }
 
-    /*public MySQL_DB(String driver, String URL, String user, String pass) {
+    /*public LocalDB(String driver, String URL, String user, String pass) {
         dbDriver = driver;
         dbURL = URL;
         dbUser = user;
@@ -52,13 +50,6 @@ public class MySQL_DB {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        finally {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
         return queryResult;
     }
 
@@ -68,13 +59,6 @@ public class MySQL_DB {
             statement.executeUpdate(query);
         } catch (SQLException e) {
             e.printStackTrace();
-        }
-        finally {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
     }
 
