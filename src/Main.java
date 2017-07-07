@@ -1,3 +1,4 @@
+import java.util.List;
 
 public class Main {
     //private static final int TEST_INDEX = 211;
@@ -26,11 +27,15 @@ public class Main {
         FreebaseDB db = new FreebaseDB();
 
         //test query
-        /*db.queryTable("SELECT * FROM freebase_mysql_db.`freebase-onlymid_-_fb-id2row-id` WHERE `count_row_id` = 1085");
-        System.out.println(db.parseQueryResult(4));*/
+        /*db.queryTable("SELECT * FROM freebase_mysql_db.`freebase-onlymid_-_id2en_name`" +
+                " WHERE `freebase_mid` LIKE 'm.0y988qx'");
+        System.out.println(db.parseQueryResult(2));*/
 
-        String freebaseID = db.getFreebaseIDs("York University").get(0);
+        String freebaseID = db.getFreebaseIDs("Conro").get(0);
         System.out.println(freebaseID);
-        System.out.println(db.getFreebaseRowIDs(freebaseID));
+        List<String> objects = db.getObjectsfromID(Long.parseLong(db.getFreebaseRowIDs(freebaseID).get(0)), Long.parseLong(db.getFreebaseRowIDs(freebaseID).get(1)));
+        System.out.println(objects);
+        System.out.println(objects.get(0));
+        System.out.println(db.getNamefromID(objects.get(0)));
     }
 }

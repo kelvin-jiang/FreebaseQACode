@@ -10,8 +10,9 @@ public class FreebaseDB {
     private final String DATABASE_NAME = "freebase_mysql_db";
     private final String DATADUMP_TABLE_NAME = "`freebase-onlymid_-_datadump`";
     private final String ROWIDS_TABLE_NAME = "`freebase-onlymid_-_fb-id2row-id`";
-    private final String NAMEIDS_TABLE_NAME = "`freebase-onlymid_-_en_name2id`";
-    private final String ALIASIDS_TABLE_NAME = "`freebase-onlymid_-_en_alias2id`";
+    private final String NAME2ID_TABLE_NAME = "`freebase-onlymid_-_en_name2id`";
+    private final String ALIAS2ID_TABLE_NAME = "`freebase-onlymid_-_en_alias2id`";
+    private final String ID2NAME_TABLE_NAME = "`freebase-onlymid_-_id2en_name`";
 
     private final String dbDriver = "com.mysql.jdbc.Driver";
     private final String dbURL = "jdbc:mysql://image.eecs.yorku.ca:3306/" + DATABASE_NAME +
@@ -51,7 +52,7 @@ public class FreebaseDB {
         }
     }*/
 
-    //common methods
+    //---common methods---
     public void queryTable(String query) {
         try {
             queryResult = connection.createStatement().executeQuery(query);
@@ -60,6 +61,7 @@ public class FreebaseDB {
         }
     }
 
+    //parse and return a range of columns up to int numOfColumns (starts from 1)
     public List<List<String>> parseQueryResult(int numOfColumns) {
         List<List<String>> resultList = new ArrayList<>();
         try {
@@ -76,21 +78,43 @@ public class FreebaseDB {
         return resultList;
     }
 
-    //table-specific methods
+    //parse and return a single column, int column (starts from 1)
+    public List<String> singleQueryResult(int column) {
+        List<String> resultList = new ArrayList<>();
+        try {
+            while (queryResult.next()) {
+                resultList.add(queryResult.getString(column));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return resultList;
+    }
+
+    public void resetQueryCursor(){
+        try {
+            queryResult.first(); //puts cursor at first row
+            queryResult.previous(); //puts cursor right before first row, simulating reset
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //---table-specific methods---
+    //search term -> freebase IDs
     public List<String> getFreebaseIDs(String searchTerm) {
         List<String> freebaseIDs = new ArrayList<>();
 
         queryTable(String.format("SELECT * FROM %s WHERE `en_name` LIKE '%s'",
-            String.format("%s.%s", DATABASE_NAME, NAMEIDS_TABLE_NAME),
-            String.format("\"%s\"@en", searchTerm)));
+                String.format("%s.%s", DATABASE_NAME, NAME2ID_TABLE_NAME),
+                String.format("\"%s\"@en", searchTerm)));
 
-        List<List<String>> searchResults = parseQueryResult(2);
-        for (List<String> searchResult : searchResults) {
-            freebaseIDs.addAll(Arrays.asList(searchResult.get(1).split(",")));
-        }
+        List<String> searchResults = singleQueryResult(2);
+        freebaseIDs.addAll(Arrays.asList(searchResults.get(0).split(",")));
         return freebaseIDs;
     }
 
+    //freebase ID -> freebase row IDs
     public List<String> getFreebaseRowIDs(String freebaseID) {
         List<String> rowIDs = new ArrayList<>();
 
@@ -100,9 +124,43 @@ public class FreebaseDB {
         queryTable(String.format("SELECT * FROM %s WHERE `freebase_id` = '<http://rdf.freebase.com/ns/%s>'",
                 String.format("%s.%s", DATABASE_NAME, ROWIDS_TABLE_NAME), freebaseID));
 
-        List<List<String>> searchResults = parseQueryResult(4);
-        rowIDs.add(searchResults.get(0).get(1)); //min rowID
-        rowIDs.add(searchResults.get(0).get(2)); //max rowID
+        List<String> searchResults = singleQueryResult(2); //min rowID
+        rowIDs.add(searchResults.get(0));
+        resetQueryCursor();
+        searchResults = singleQueryResult(3); //max rowID
+        rowIDs.add(searchResults.get(0));
+
         return rowIDs;
+    }
+
+    //freebase row IDs -> objects
+    public List<String> getObjectsfromID(long minRowID, long maxRowID) {
+        List<String> objects = new ArrayList<>();
+
+        queryTable(String.format("SELECT * FROM %s WHERE `row_id` BETWEEN %d AND %d",
+                String.format("%s.%s", DATABASE_NAME, DATADUMP_TABLE_NAME), minRowID, maxRowID));
+
+        List<String> searchResults = singleQueryResult(3);
+        for (String searchResult : searchResults) {
+            System.out.println(searchResult);
+            if (searchResult.contains("<http://rdf.freebase.com/ns/m."))
+                objects.add(searchResult.substring(28, searchResult.length() - 1)); //only adds objects that are freebase IDs
+        }
+        return objects;
+    }
+
+    //freebase ID -> name
+    public String getNamefromID(String freebaseID) {
+        String name = "";
+
+        queryTable(String.format("SELECT * FROM %s WHERE `freebase_mid` = '%s'",
+                String.format("%s.%s", DATABASE_NAME, ID2NAME_TABLE_NAME), freebaseID));
+
+        List<String> searchResults = singleQueryResult(2);
+        for (String searchResult : searchResults) {
+            if (searchResult.contains("@en"))
+                name = searchResult.substring(searchResult.indexOf("\""), searchResult.lastIndexOf("\""));
+        }
+        return name;
     }
 }
