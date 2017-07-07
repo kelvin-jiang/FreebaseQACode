@@ -24,6 +24,13 @@ public class Main {
 
         //MySQL
         FreebaseDB db = new FreebaseDB();
-        System.out.println(db.getFreebaseIDs("York University"));
+
+        //test query
+        /*db.queryTable("SELECT * FROM freebase_mysql_db.`freebase-onlymid_-_fb-id2row-id` WHERE `count_row_id` = 1085");
+        System.out.println(db.parseQueryResult(4));*/
+
+        String freebaseID = db.getFreebaseIDs("York University").get(0);
+        System.out.println(freebaseID);
+        System.out.println(db.getFreebaseRowIDs(freebaseID));
     }
 }
