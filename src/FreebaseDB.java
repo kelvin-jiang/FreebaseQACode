@@ -3,6 +3,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class FreebaseDB {
@@ -78,27 +79,30 @@ public class FreebaseDB {
     //table-specific methods
     public List<String> getFreebaseIDs(String searchTerm) {
         List<String> freebaseIDs = new ArrayList<>();
-            queryTable(String.format("SELECT * FROM %s WHERE `en_name` LIKE '%s'",
-                String.format("%s.%s", DATABASE_NAME, NAMEIDS_TABLE_NAME),
-                String.format("\"%s\"@en", searchTerm)));
 
-            freebaseIDs = parseQueryResult(2).get(0);
-            System.out.println(freebaseIDs.get(1));
-            /*for (int i = 1; i < parseQueryResult(2).size(); i++) {
-                freebaseIDs.addAll(Arrays.asList(parseQueryResult(2).get(i).get(2).split(",")));
-            }*/
+        queryTable(String.format("SELECT * FROM %s WHERE `en_name` LIKE '%s'",
+            String.format("%s.%s", DATABASE_NAME, NAMEIDS_TABLE_NAME),
+            String.format("\"%s\"@en", searchTerm)));
 
+        List<List<String>> searchResults = parseQueryResult(2);
+        for (List<String> searchResult : searchResults) {
+            freebaseIDs.addAll(Arrays.asList(searchResult.get(1).split(",")));
+        }
         return freebaseIDs;
     }
 
     public List<String> getFreebaseRowIDs(String freebaseID) {
         List<String> rowIDs = new ArrayList<>();
 
-        queryTable(String.format("SELECT * FROM %s WHERE `freebase_id` = '<%s>'",
+        //chop off brackets with number of facts at the end of freebaseID
+        freebaseID = freebaseID.substring(0, freebaseID.indexOf("("));
+
+        queryTable(String.format("SELECT * FROM %s WHERE `freebase_id` = '<http://rdf.freebase.com/ns/%s>'",
                 String.format("%s.%s", DATABASE_NAME, ROWIDS_TABLE_NAME), freebaseID));
 
-        rowIDs.add(parseQueryResult(4).get(0).get(1)); //min rowID
-        rowIDs.add(parseQueryResult(4).get(0).get(2)); //max rowID
+        List<List<String>> searchResults = parseQueryResult(4);
+        rowIDs.add(searchResults.get(0).get(1)); //min rowID
+        rowIDs.add(searchResults.get(0).get(2)); //max rowID
         return rowIDs;
     }
 }
