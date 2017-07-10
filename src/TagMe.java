@@ -1,4 +1,4 @@
-//https://tagme.d4science.org/tagme/ demo site
+//demo site -> https://tagme.d4science.org/tagme/
 //this class uses the API provided by tagme
 
 import com.gargoylesoftware.htmlunit.Page;
