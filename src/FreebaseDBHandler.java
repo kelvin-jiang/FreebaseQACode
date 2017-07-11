@@ -68,11 +68,12 @@ public class FreebaseDBHandler extends MySQLHandler {
     }
 
     //freebase row IDs -> objects freebase IDs
-    public List<String> getObjectsfromRowIDs(long minRowID, long maxRowID) {
+    public List<String> getObjectIDsFromRowIDs(List<String> rowIDs) {
         List<String> objects = new ArrayList<>();
 
         queryTable(String.format("SELECT * FROM %s WHERE `row_id` BETWEEN %d AND %d",
-                String.format("%s.%s", DATABASE_NAME, DATADUMP_TABLE_NAME), minRowID, maxRowID));
+                String.format("%s.%s", DATABASE_NAME, DATADUMP_TABLE_NAME),
+                Long.parseLong(rowIDs.get(0)), Long.parseLong(rowIDs.get(1))));
 
         List<String> searchResults = singleQueryResult(3);
         for (String searchResult : searchResults) {
@@ -83,7 +84,7 @@ public class FreebaseDBHandler extends MySQLHandler {
     }
 
     //freebase ID -> name (name or alias)
-    public List<String> getNamesfromIDs(List<String> freebaseIDs) {
+    /*public List<String> getNamesfromIDs(List<String> freebaseIDs) {
         List<String> names = new ArrayList<>();
 
         for (String freebaseID : freebaseIDs) {
@@ -96,9 +97,36 @@ public class FreebaseDBHandler extends MySQLHandler {
             names = collectNamesOrAliases(names);
         }
         return names;
+    }*/
+
+    //freebase row IDs -> objects -> english names and aliases
+    public List<String> getNamesFromRowIDs(List<String> rowIDs) {
+        List<String> names = new ArrayList<>();
+
+        queryTable(String.format("SELECT * FROM %s WHERE `row_id` BETWEEN %d AND %d",
+                String.format("%s.%s", DATABASE_NAME, DATADUMP_TABLE_NAME),
+                Long.parseLong(rowIDs.get(0)), Long.parseLong(rowIDs.get(1))));
+
+        List<String> predicates = singleQueryResult(2);
+        resetQueryCursor();
+        List<String> objects = singleQueryResult(3);
+        List<String> allNames = new ArrayList<>();
+        if (predicates.size() != 0) {
+            for (int i = 0; i < predicates.size(); i++) {
+                if (predicates.get(i).equals("<http://rdf.freebase.com/ns/type.object.name>") ||
+                        predicates.get(i).equals("<http://rdf.freebase.com/ns/common.topic.alias>")) {
+                    allNames.add(objects.get(i)); //saves corresponding object
+                }
+            }
+        }
+        for (String name : allNames) {
+            if (name.endsWith("@en"))
+                names.add(name.substring(name.indexOf("\"") + 1, name.lastIndexOf("\"")));
+        }
+        return names;
     }
 
-    private List<String> collectNamesOrAliases(List<String> names) {
+    /*private List<String> collectNamesOrAliases(List<String> names) {
         List<String> searchResults = singleQueryResult(2);
         if (searchResults.size() != 0) {
             for (String searchResult : searchResults) { //there can be multiple names or aliases returned
@@ -106,5 +134,5 @@ public class FreebaseDBHandler extends MySQLHandler {
             }
         }
         return names;
-    }
+    }*/
 }

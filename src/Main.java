@@ -1,8 +1,9 @@
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class Main {
-    private static final int TEST_INDEX = 3;
+    private static final int TEST_INDEX = 1;
 
     public static void main(String[] args) {
         String FILEPATH = args[0]; //take command line argument as JSON file to be read
@@ -45,16 +46,19 @@ public class Main {
         List<String> freebaseIDs = db.getFreebaseIDs(TEST_SEARCH);
         System.out.println("Machine IDs: " + freebaseIDs);
         String freebaseID = freebaseIDs.get(0);
-        List<String> objects = db.getObjectsfromRowIDs(Long.parseLong(db.getFreebaseRowIDs(freebaseID).get(0)), Long.parseLong(db.getFreebaseRowIDs(freebaseID).get(1)));
+        List<String> objects = db.getObjectIDsFromRowIDs(Long.parseLong(db.getFreebaseRowIDs(freebaseID).get(0)), Long.parseLong(db.getFreebaseRowIDs(freebaseID).get(1)));
         System.out.println("Machine IDs of Objects of \"" + TEST_SEARCH + "\": " + objects);
         System.out.println("Object Names: " + db.getNamesfromIDs(objects));*/
 
         //final String SEARCH = "Conro";
+        List<String> freebaseAnswers = new ArrayList<>();
         for (String tag : questionTags) {
-            List<String> freebaseIDs = db.getFreebaseIDs(tag);
-            for (String freebaseID : freebaseIDs) {
-                List<String> objects = db.getObjectsfromRowIDs(Long.parseLong(db.getFreebaseRowIDs(freebaseID).get(0)), Long.parseLong(db.getFreebaseRowIDs(freebaseID).get(1)));
-                List<String> freebaseAnswers = db.getNamesfromIDs(objects);
+            List<String> tagIDs = db.getFreebaseIDs(tag);
+            for (String tagID : tagIDs) {
+                List<String> objectIDs = db.getObjectIDsFromRowIDs(db.getFreebaseRowIDs(tagID));
+                for (String objectID : objectIDs) {
+                    freebaseAnswers.addAll(db.getNamesFromRowIDs(db.getFreebaseRowIDs(objectID)));
+                }
                 System.out.println("Freebase Answers: " + freebaseAnswers);
             }
         }
