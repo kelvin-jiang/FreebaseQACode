@@ -1,4 +1,3 @@
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -42,32 +41,24 @@ public class Main {
         /*db.updateTable("ALTER TABLE freebase_mysql_db.`freebase-onlymid_-_id2en_name` ADD PRIMARY KEY (`freebase_mid`)");
         //System.out.println(db.parseQueryResult(2));*/
 
-        List<String> freebaseAnswers = new ArrayList<>(); //not really needed, just to output
-
-        for (String tag : questionTags) { //repeat for each tag
-            List<String> tagIDs = db.getIDs(tag); //tag name/alias -> tag ID
-            for (String tagID : tagIDs) { //repeat for each tag ID
-                List<String> objectIDs = db.getObjects(db.getRowIDs(tagID)); //tag ID -> tag row IDs -> object IDs
-                for (String objectID : objectIDs) { //repeat for each object ID
-                    List<String> nameAliasRowIDs = db.getNameAliasRowIDs(db.getRowIDs(objectID)); //object ID -> object row IDs -> object name/alias row IDs
-                    for (String nameAliasRowID : nameAliasRowIDs) { //repeat for each name/alias row ID
-                        List<String> nameAliasRowIDList = new ArrayList<>(); //getObjects only accepts arrays, so a length 1 list is created
-                        nameAliasRowIDList.add(nameAliasRowID);
-                        List<String> namesAliases = db.getObjects(nameAliasRowIDList);
-                        for (String nameAlias : namesAliases) {
-                            freebaseAnswers.add(nameAlias);
-                            if (nameAlias.toLowerCase().trim().equals(answer.toLowerCase().trim())) {
-                                List<String> saveData = new ArrayList<>();
-                                saveData.addAll(db.collectTriplet(nameAliasRowID)); //adds the subject-predicate-object triplet to saveData
-                                saveData.add(question);
-                                saveData.add(answer);
-                                System.out.println("TO SAVE: " + saveData);
-                            }
+        for (String tag : questionTags) { //repeats for each tag
+            List<String> tagIDs = db.nameAlias2IDs(tag);
+            for (String tagID : tagIDs) { //repeats for each tag ID
+                List<NTriple> triples = db.ID2Triples(tagID);
+                for (NTriple triple : triples) { //repeats for each triple
+                    List<String> namesAliases = db.objectID2NamesAliases(triple.getFormattedObjectID()); //gets names/aliases from object of current triple
+                    triple.setSubject(tag); //adds subject name to triple
+                    for (String nameAlias : namesAliases) { //repeats for each name/alias
+                        triple.setObject(nameAlias); //adds object name to triple
+                        System.out.println(triple.toString());
+                        if (nameAlias.toLowerCase().trim().equals(answer.toLowerCase().trim())) {
+                            String[] saveData = {triple.getSubject(), triple.getSubjectID(), triple.getFormattedPredicate(), triple.getFormattedObjectID(),
+                                    triple.getObject(), question, answer};
+                            System.out.println("TO SAVE: " + Arrays.toString(saveData));
                         }
                     }
                 }
             }
         }
-        System.out.println("Freebase Answers: " + freebaseAnswers);
     }
 }
