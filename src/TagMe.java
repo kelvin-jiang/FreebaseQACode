@@ -13,10 +13,11 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 public class TagMe {
-    private final double RHO_THRESHOLD = 0.1;
+    private double rhoThreshold;
     private String json;
 
-    public TagMe(String question){
+    public TagMe(String question, double rho){
+        rhoThreshold = rho;
         String url = "https://tagme.d4science.org/tagme/tag?gcube-token=e276e0d3-30d5-4c40-bc43-4e19eafb1d89-843339462&text="
                 .concat(question);
 
@@ -48,7 +49,7 @@ public class TagMe {
                 JSONObject jsonAnnotationElement = (JSONObject) annotationsIterator.next();
 
                 double rho = (double) jsonAnnotationElement.get("rho");
-                if (rho > RHO_THRESHOLD)
+                if (rho > rhoThreshold)
                     tags.add((String) jsonAnnotationElement.get("title"));
             }
         } catch (ParseException e) {

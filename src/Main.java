@@ -2,7 +2,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Main {
-    private static final int TEST_INDEX = 3;
+    private static final int TEST_INDEX = 2;
+    private static final double RHO_THRESHOLD = 0.15;
 
     public static void main(String[] args) {
         String FILEPATH = args[0]; //take command line argument as JSON file to be read
@@ -17,7 +18,7 @@ public class Main {
         String question = questions[TEST_INDEX];
         String answer = answers[TEST_INDEX];
         System.out.println(question + " (" + answer + ")");
-        TagMe tagger = new TagMe(question);
+        TagMe tagger = new TagMe(question, RHO_THRESHOLD);
         String[] questionTags = tagger.retrieveEntities();
         System.out.print("Tags: ");
         System.out.println(Arrays.toString(questionTags));
@@ -35,27 +36,28 @@ public class Main {
 
         //Freebase
         FreebaseDBHandler db = new FreebaseDBHandler();
+
         //test query/update
         /*db.updateTable("ALTER TABLE freebase_mysql_db.`freebase-onlymid_-_id2en_name` ADD PRIMARY KEY (`freebase_mid`)");
         //System.out.println(db.parseQueryResult(2));*/
 
-        //test methods
-        /*final String TEST_SEARCH = "Colors (feat. Tatu)";
-        System.out.println("Search Term: " + TEST_SEARCH);
-        List<String> freebaseIDs = db.getFreebaseIDs(TEST_SEARCH);
-        System.out.println("Machine IDs: " + freebaseIDs);
-        String freebaseID = freebaseIDs.get(0);
-        List<String> objects = db.getObjectsfromRowIDs(Long.parseLong(db.getFreebaseRowIDs(freebaseID).get(0)), Long.parseLong(db.getFreebaseRowIDs(freebaseID).get(1)));
-        System.out.println("Machine IDs of Objects of \"" + TEST_SEARCH + "\": " + objects);
-        System.out.println("Object Names: " + db.getNamesfromIDs(objects));*/
-
-        //final String SEARCH = "Conro";
-        for (String tag : questionTags) {
-            List<String> freebaseIDs = db.getFreebaseIDs(tag);
-            for (String freebaseID : freebaseIDs) {
-                List<String> objects = db.getObjectsfromRowIDs(Long.parseLong(db.getFreebaseRowIDs(freebaseID).get(0)), Long.parseLong(db.getFreebaseRowIDs(freebaseID).get(1)));
-                List<String> freebaseAnswers = db.getNamesfromIDs(objects);
-                System.out.println("Freebase Answers: " + freebaseAnswers);
+        for (String tag : questionTags) { //repeats for each tag
+            List<String> tagIDs = db.nameAlias2IDs(tag);
+            for (String tagID : tagIDs) { //repeats for each tag ID
+                List<NTriple> triples = db.ID2Triples(tagID);
+                for (NTriple triple : triples) { //repeats for each triple
+                    List<String> namesAliases = db.objectID2NamesAliases(triple.getFormattedObjectID()); //gets names/aliases from object of current triple
+                    triple.setSubject(tag); //adds subject name to triple
+                    for (String nameAlias : namesAliases) { //repeats for each name/alias
+                        triple.setObject(nameAlias); //adds object name to triple
+                        System.out.println(triple.toString());
+                        if (nameAlias.toLowerCase().trim().equals(answer.toLowerCase().trim())) {
+                            String[] saveData = {triple.getSubject(), triple.getSubjectID(), triple.getFormattedPredicate(), triple.getFormattedObjectID(),
+                                    triple.getObject(), question, answer};
+                            System.out.println("TO SAVE: " + Arrays.toString(saveData));
+                        }
+                    }
+                }
             }
         }
     }
