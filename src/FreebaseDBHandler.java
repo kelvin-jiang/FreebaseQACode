@@ -10,7 +10,7 @@ public class FreebaseDBHandler extends MySQLHandler {
     private static final String NAME2ID_TABLE_NAME = "`freebase-onlymid_-_en_name2id`";
     private static final String ALIAS2ID_TABLE_NAME = "`freebase-onlymid_-_en_alias2id`";
 
-    private static final String dbURL = "jdbc:mysql://image.eecs.yorku.ca:3306/" + DATABASE_NAME +
+    private static final String dbURL = "jdbc:mysql://speech1.eecs.yorku.ca:3306/" + DATABASE_NAME +
         "?autoReconnect=true&useSSL=false";
     private static final String dbUser = "read_only_user";
     private static final String dbPass = "P@ssw0rd";
