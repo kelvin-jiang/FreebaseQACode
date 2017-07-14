@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.Iterator;
 
 public class RetrieveQA {
-    private int size;
     private String[] questions;
     private String[] answers;
 
@@ -18,10 +17,10 @@ public class RetrieveQA {
             JSONObject jsonData = (JSONObject) parser.parse(new FileReader(filepath));
 
             JSONArray data = (JSONArray) jsonData.get("Data");
-            size = data.size();
+            int size = data.size();
+            Iterator dataIterator = data.iterator();
             questions = new String[size];
             answers = new String[size];
-            Iterator dataIterator = data.iterator();
 
             for (int i = 0; i < size; i++) {
                 //get a QA set
@@ -30,7 +29,9 @@ public class RetrieveQA {
                 //get the answer
                 JSONObject jsonAnswer = (JSONObject) jsonDataElement.get("Answer");
                 String answer = (String) jsonAnswer.get("MatchedWikiEntityName");
-                answers[i] = answer;
+                answer = answer != null ? answer : (String) jsonAnswer.get("NormalizedValue"); //if MatchedWikiEntityName is null, use NormalizedValue
+                if (answer != null) //if either MatchedWikiEntityName or NormalizedValue returns a value
+                    answers[i] = answer.toLowerCase().trim();
 
                 //get the question
                 String question = (String) jsonDataElement.get("Question");
@@ -39,10 +40,6 @@ public class RetrieveQA {
         } catch (ParseException | IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public int getSize() {
-        return size;
     }
 
     public String[] getQuestions() {
