@@ -14,7 +14,7 @@ public class Main {
         String[] questions = retrieval.getQuestions();
         String[] answers = retrieval.getAnswers();
 
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < questions.length; i++) {
             String question = questions[i];
             String answer = answers[i];
             System.out.println(question + " (" + answer + ")");
