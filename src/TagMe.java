@@ -50,7 +50,7 @@ public class TagMe {
 
                 double rho = (double) jsonAnnotationElement.get("rho");
                 if (rho > rhoThreshold)
-                    tags.add((String) jsonAnnotationElement.get("title"));
+                    tags.add(((String) jsonAnnotationElement.get("title")).toLowerCase().trim());
             }
         } catch (ParseException e) {
             e.printStackTrace();

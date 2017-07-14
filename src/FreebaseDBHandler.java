@@ -45,12 +45,12 @@ public class FreebaseDBHandler extends MySQLHandler {
 
         //searches in the form of "name"@en
         queryTable(String.format("SELECT * FROM %s.%s WHERE `en_name` = '\"%s\"@en'",
-                DATABASE_NAME, NAME2ID_TABLE_NAME, tag));
+                DATABASE_NAME, NAME2ID_TABLE_NAME, escapeMetaCharacters(tag)));
         freebaseIDs = collectIDs(freebaseIDs);
 
         //searches in the form of "alias"@en
         queryTable(String.format("SELECT * FROM %s.%s WHERE `en_alias` = '\"%s\"@en'",
-                DATABASE_NAME, ALIAS2ID_TABLE_NAME, tag));
+                DATABASE_NAME, ALIAS2ID_TABLE_NAME, escapeMetaCharacters(tag)));
         freebaseIDs = collectIDs(freebaseIDs);
 
         return freebaseIDs;

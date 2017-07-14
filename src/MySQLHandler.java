@@ -6,12 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MySQLHandler {
-    private String dbDriver = "com.mysql.jdbc.Driver";
-
     private Connection connection;
     private ResultSet queryResult;
 
     public MySQLHandler(String URL, String user, String pass) {
+        String dbDriver = "com.mysql.jdbc.Driver";
         try {
             Class.forName(dbDriver).newInstance();
             connection = DriverManager.getConnection(URL, user, pass);
@@ -20,6 +19,7 @@ public class MySQLHandler {
         }
     }
 
+    //---MYSQL METHODS---
     public void queryTable(String query) {
         try {
             queryResult = connection.createStatement().executeQuery(query);
@@ -77,5 +77,19 @@ public class MySQLHandler {
 
     public ResultSet getQueryResult() {
         return queryResult;
+    }
+
+    //---MISCELLANEOUS METHODS---
+    public String escapeMetaCharacters(String input) { //adds backslashes to escape special characters that MySQL cannot handle
+        final String[] metaCharacters = {"\'", "\"", "\\"};
+        String output = input;
+        if (input != null) {
+            for (String metaCharacter : metaCharacters) {
+                if (input.contains(metaCharacter)) {
+                    output = input.replace(metaCharacter, "\\" + metaCharacter);
+                }
+            }
+        }
+        return output;
     }
 }
