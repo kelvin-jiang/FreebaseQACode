@@ -10,7 +10,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/json-simple-1.1.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/libs/htmlunit-2.27-OSGi.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -19,7 +19,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/htmlunit-2.27-OSGi.jar!/" />
+          <root url="jar://$MODULE_DIR$/libs/json-simple-1.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -28,7 +28,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/mysql-connector-java-5.1.42-bin.jar!/" />
+          <root url="jar://$MODULE_DIR$/libs/mysql-connector-java-5.1.42-bin.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
