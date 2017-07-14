@@ -24,7 +24,7 @@ public class LocalDBHandler extends MySQLHandler {
             "id INTEGER(11) AUTO_INCREMENT PRIMARY KEY)");*/
     }
     public void addRow(String subjectID, String predicate, String objectID, int rowID, String question, String answer, char yn) {
-        updateTable(String.format("INSERT INTO %s (subjectID, predicate, objectID, rowID, question, answer, yn) " +
+        updateTable(String.format("INSERT INTO %s (subjectID, subject, predicate, objectID, object, rowID, question, answer, yn) " +
                         "VALUES (%s, %s, %s, %d, %s, %s, %c)",
             String.format("%s.%s", DATABASE_NAME, TABLE_NAME), subjectID, predicate, objectID, rowID, question, answer, yn));
     }
