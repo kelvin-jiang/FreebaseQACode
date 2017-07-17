@@ -4,7 +4,6 @@ public class LocalDBHandler extends MySQLHandler {
     private static final String DATABASE_NAME = "qatofreebase_db";
     private static final String TABLE_NAME = "`freebase_triples`";
 
-    //private String dbDriver = "com.mysql.jdbc.Driver";
     private static String dbURL = "jdbc:mysql://localhost:3306/" + DATABASE_NAME;
     private static String dbUser = "root";
     private static String dbPass = "root";

@@ -7,34 +7,38 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Iterator;
 
-public class RetrieveQA {
+public class QARetrieval {
     private String[] questions;
     private String[] answers;
 
-    public RetrieveQA(String filepath) {
+    public QARetrieval(String filepath) {
         try {
             JSONParser parser = new JSONParser();
-            JSONObject jsonData = (JSONObject) parser.parse(new FileReader(filepath));
-
-            JSONArray data = (JSONArray) jsonData.get("Data");
+            JSONObject json = (JSONObject) parser.parse(new FileReader(filepath));
+            JSONArray data = (JSONArray) json.get("Data");
             int size = data.size();
-            Iterator dataIterator = data.iterator();
-            questions = new String[size];
+            Iterator iterator = data.iterator();
+
+            JSONObject dataElement;
+            JSONObject answerObject;
+            String answer;
             answers = new String[size];
+            String question;
+            questions = new String[size];
 
             for (int i = 0; i < size; i++) {
                 //get a QA set
-                JSONObject jsonDataElement = (JSONObject) dataIterator.next();
+                dataElement = (JSONObject) iterator.next();
 
                 //get the answer
-                JSONObject jsonAnswer = (JSONObject) jsonDataElement.get("Answer");
-                String answer = (String) jsonAnswer.get("MatchedWikiEntityName");
-                answer = answer != null ? answer : (String) jsonAnswer.get("NormalizedValue"); //if MatchedWikiEntityName is null, use NormalizedValue
+                answerObject = (JSONObject) dataElement.get("Answer");
+                answer = (String) answerObject.get("MatchedWikiEntityName");
+                answer = answer != null ? answer : (String) answerObject.get("NormalizedValue"); //if MatchedWikiEntityName is null, use NormalizedValue
                 if (answer != null) //if either MatchedWikiEntityName or NormalizedValue returns a value
                     answers[i] = answer.toLowerCase().trim();
 
                 //get the question
-                String question = (String) jsonDataElement.get("Question");
+                question = (String) dataElement.get("Question");
                 questions[i] = question;
             }
         } catch (ParseException | IOException e) {
