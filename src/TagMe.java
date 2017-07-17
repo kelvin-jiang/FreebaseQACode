@@ -29,7 +29,7 @@ public class TagMe {
 
     private List<String> tags = new ArrayList<>();
 
-    public TagMe(double threshold){
+    public TagMe(double threshold) {
         RHO_THRESHOLD = threshold;
 
         client = new WebClient();

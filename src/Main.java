@@ -71,6 +71,7 @@ public class Main {
             }
             tags.clear();
             answerIDs.clear();
+            answerIDsList.clear();
 
             //top-down search
             /*for (String tag : tags) { //repeats for each tag
