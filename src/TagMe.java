@@ -14,7 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class TagMe {
-    private double RHO_THRESHOLD;
+    private double rhoThreshold;
     private WebClient client;
     private Page page;
     private String url;
@@ -29,7 +29,7 @@ public class TagMe {
     private List<String> tags;
 
     public TagMe(double threshold) {
-        RHO_THRESHOLD = threshold;
+        rhoThreshold = threshold;
 
         client = new WebClient();
         client.getOptions().setUseInsecureSSL(true);
@@ -56,7 +56,7 @@ public class TagMe {
                 annotationElement = (JSONObject) iterator.next();
 
                 rho = (double) annotationElement.get("rho");
-                if (rho > RHO_THRESHOLD) {
+                if (rho > rhoThreshold) {
                     tag = (String) annotationElement.get("title");
                     if (tag.contains("(") && tag.contains(")")) //chops brackets off if the tag has brackets at the end due to Wikipedia
                         tag = tag.substring(0, tag.indexOf("(") - 1);

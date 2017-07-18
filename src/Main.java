@@ -3,45 +3,43 @@ import java.util.HashSet;
 import java.util.List;
 
 public class Main {
-    private static double RHO_THRESHOLD = 0.15;
+    //---VARIABLES FOR PROCESSING COMMAND LINE ARGUMENTS---
+    private static String filepath;
+    private static int startIndex = 0;
+    private static int endIndex = 1000000; //arbitrary value
+    private static double rhoThreshold = 0.2;
 
     public static void main(String[] args) {
-        int startIndex = 0;
-        int endIndex = 1000000;
-
-        if (args.length == 2 || args.length > 4) {
-            System.out.printf("Usage: \tjava Main QA_FILE.json\n\tjava Main QA_FILE.json startIndex endIndex" +
-                    "\n\tjava Main QA_FILE.json startIndex endIndex rhoThreshold");
-            System.exit(1);
-        }
-        if (args.length == 4) RHO_THRESHOLD = Double.parseDouble(args[3]);
-        if (args.length >= 3) {
-            startIndex = Integer.parseInt(args[1]);
-            endIndex = Integer.parseInt(args[2]);
-        }
-        String FILEPATH = args[0]; //takes command line argument as the filepath for the JSON file to be read
-
-        QARetrieval retrieval = new QARetrieval(FILEPATH); //retrieve QA from the JSON file
-        String[] questionBank = retrieval.getQuestions();
-        String[] answerBank = retrieval.getAnswers();
+        //---VARIABLES AND OBJECTS, listed in the order they are used---
+        QARetrieval retrieval = new QARetrieval();
+        String[] questionBank, answerBank;
         String question, answer;
-
-        TagMe tagger = new TagMe(RHO_THRESHOLD);
+        TagMe tagger;
         HashSet<String> tags = new HashSet<>();
-
-        //CONSIDER MOVING TO FREEBASEDBHANDLER
         FreebaseDBHandler db = new FreebaseDBHandler();
-        HashSet<String> answerIDs = new HashSet<>(); //bottom-up
+        HashSet<String> answerIDs = new HashSet<>();
         List<String> answerIDsList = new ArrayList<>(answerIDs); //answerIDsList is a copy of answerIDs in ArrayList form
-        List<String> tagIDs = new ArrayList<>(); //top-down
+        List<NTriple> answerTriples = new ArrayList<>();
+        List<String> mediatorNamesAliasesRowIDs = new ArrayList<>();
+        List<NTriple> mediatorTriples = new ArrayList<>();
+        HashSet<String> mediatorIDs = new HashSet<>();
+        List<String> tagIDs = new ArrayList<>();
         List<NTriple> triples = new ArrayList<>();
-        List<String> namesAliasesRowIDs = new ArrayList<>();
-        List<String> namesAliases = new ArrayList<>();
 
         int matches = 0;
 
-        if (startIndex < 0) startIndex = 0;
-        if (endIndex < startIndex || endIndex > questionBank.length) endIndex = questionBank.length;
+        //---FUNCTIONS---
+        processArguments(args);
+
+        retrieval.parseJSON(filepath); //retrieves QAs from the JSON file
+        questionBank = retrieval.getQuestions();
+        answerBank = retrieval.getAnswers();
+
+        tagger = new TagMe(rhoThreshold); //sets up the TagMe tagger
+
+        //checks the user-inputted bounds of the outermost loop, startIndex and endIndex
+        if (startIndex < 0) startIndex = 0; //startIndex has a minimum value of 0
+        if (endIndex < startIndex || endIndex > questionBank.length) endIndex = questionBank.length; //endIndex cannot be less than startIndex
         for (int i = startIndex; i < endIndex; i++) {
             question = questionBank[i];
             answer = answerBank[i];
@@ -55,29 +53,50 @@ public class Main {
             if (tags.size() == 0) continue; //skips the QA pair if there are no tags
             System.out.println("Tags: " + tags);
 
-            //top-down + bottom-up search
+            //bottom-up
             answerIDs.addAll(db.nameAlias2IDs(answer, answerIDsList)); //prepares all freebase IDs with a name or alias matching the answer
+            for (String answerID : answerIDs) {
+                answerTriples = db.ID2Triples(answerID, answerTriples);
+                mediatorTriples.addAll(db.triples2Mediators(answerTriples, mediatorNamesAliasesRowIDs, mediatorTriples));
+                //mediatorIDs.addAll(db.ID2MediatorIDs(answerID, answerObjectIDs, answerObjectNamesAliasesRowIDs, answerObjectNamesAliases, mediatorIDsList));
+            }
+            for (NTriple mediatorTriple : mediatorTriples) {
+                mediatorIDs.add(mediatorTriple.getObjectID());
+            }
 
+            //top-down
             for (String tag : tags) {
                 tagIDs = db.nameAlias2IDs(tag, tagIDs);
                 for (String tagID : tagIDs) {
                     triples = db.ID2Triples(tagID, triples);
                     for (NTriple triple : triples) {
                         if (answerIDs.contains(triple.getObjectID())) { //if the object of the triple has an ID matching an answer ID, check its name
-                            namesAliases = db.objectID2NamesAliases(triple.getObjectID(), namesAliasesRowIDs,
-                                    namesAliases); //gets names/aliases from object of current triple
+                            //namesAliases = db.objectID2NamesAliases(triple.getObjectID(), namesAliasesRowIDs, namesAliases); //gets names/aliases from object of current triple
                             triple.setSubject(tag);
-                            for (String nameAlias : namesAliases) { //repeats for each name/alias
-                                if (nameAlias.toLowerCase().trim().equals(answer.toLowerCase().trim())) {
-                                    triple.setObject(nameAlias); //adds object name to triple
+                            //for (String nameAlias : namesAliases) {
+                                //if (nameAlias.toLowerCase().trim().equals(answer.toLowerCase().trim())) { //if the name/alias matches the answer, save all data
+                                    triple.setObject(answer);
+                                    //triple.setObject(nameAlias); //adds object name to triple
                                     matches++;
                                     System.out.printf("TO SAVE: %s     %s     %s\n", triple.toString(), question, answer);
-                                    System.out.printf("Processed %d questions with %d Matches\n", i - startIndex + 1, matches);
-                                    break; //no need to run through all names/aliases of a single object after obtaining a match
+                                    System.out.printf("PROCESSED %d QUESTIONS WITH %d MATCHES\n", i - startIndex + 1, matches);
+                                    //break; //no need to run through all names/aliases of a single object after obtaining a match
+                                //}
+                            //}
+                            //namesAliasesRowIDs.clear();
+                            //namesAliases.clear();
+                        }
+                        else if (mediatorIDs.contains(triple.getObjectID())) {
+                            triple.setSubject(tag); //no object name for triple because mediator
+                            for (NTriple mediatorTriple : mediatorTriples) { //go through mediator triples to find the corresponding one
+                                if (mediatorTriple.getObjectID().equals(triple.getObjectID())) {
+                                    mediatorTriple.setSubject(answer); //no object name for mediatorTriple because mediator
+                                    matches++;
+                                    System.out.printf("TO SAVE: %s     %s     %s     %s\n", triple.toString(), mediatorTriple.toReverseString(), question, answer);
+                                    System.out.printf("PROCESSED %d QUESTIONS WITH %d MATCHES\n", i - startIndex + 1, matches);
+                                    break; //ugly solution since there can be duplicates in mediatorTriples
                                 }
                             }
-                            namesAliasesRowIDs.clear();
-                            namesAliases.clear();
                         }
                     }
                     triples.clear();
@@ -87,30 +106,27 @@ public class Main {
             tags.clear();
             answerIDs.clear();
             answerIDsList.clear();
+            answerTriples.clear();
+            mediatorNamesAliasesRowIDs.clear();
+            mediatorTriples.clear();
+            mediatorIDs.clear();
 
-            System.gc();
-
-            //top-down search
-            /*for (String tag : tags) { //repeats for each tag
-                List<String> tagIDs = db.nameAlias2IDs(tag);
-                for (String tagID : tagIDs) { //repeats for each tag ID
-                    List<NTriple> triples = db.ID2Triples(tagID);
-                    for (NTriple triple : triples) { //repeats for each triple
-                        List<String> namesAliases = db.objectID2NamesAliases(triple.getObjectID()); //gets names/aliases from object of current triple
-                        triple.setSubject(tag); //adds subject name to triple
-                        for (String nameAlias : namesAliases) { //repeats for each name/alias
-                            triple.setObject(nameAlias); //adds object name to triple
-                            System.out.println(triple.toString());
-                            if (nameAlias.toLowerCase().trim().equals(answer.toLowerCase().trim())) {
-                                String[] saveData = {triple.getSubject(), triple.getSubjectID(), triple.getPredicate(), triple.getObjectID(),
-                                        triple.getObject(), question, answer};
-                                System.out.println("TO SAVE: " + Arrays.toString(saveData));
-                            }
-                        }
-                    }
-                }
-            }*/
+            System.gc(); //prompts Java's garbage collector to clean up the cleared Lists and HashSets
         }
         System.out.println("Number of Matches: " + matches);
+    }
+
+    private static void processArguments(String[] args) {
+        if (args.length == 2 || args.length > 4) {
+            System.out.printf("USAGE: \tjava Main QA_FILE.json\n\tjava Main QA_FILE.json startIndex endIndex" +
+                    "\n\tjava Main QA_FILE.json startIndex endIndex rhoThreshold\n");
+            System.exit(1);
+        }
+        if (args.length >= 3) {
+            startIndex = Integer.parseInt(args[1]);
+            endIndex = Integer.parseInt(args[2]);
+            if (args.length == 4) rhoThreshold = Double.parseDouble(args[3]);
+        }
+        filepath = args[0]; //takes command line argument as the filepath for the JSON file to be read
     }
 }

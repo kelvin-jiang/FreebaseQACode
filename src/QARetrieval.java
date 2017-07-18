@@ -8,22 +8,31 @@ import java.io.IOException;
 import java.util.Iterator;
 
 public class QARetrieval {
+    private String filepath;
+    private JSONParser parser;
+    private JSONObject json;
+    private JSONArray data;
+    private int size;
+    private Iterator iterator;
+    private JSONObject dataElement;
+    private JSONObject answerObject;
+    private String question;
+    private String answer;
     private String[] questions;
     private String[] answers;
 
-    public QARetrieval(String filepath) {
-        try {
-            JSONParser parser = new JSONParser();
-            JSONObject json = (JSONObject) parser.parse(new FileReader(filepath));
-            JSONArray data = (JSONArray) json.get("Data");
-            int size = data.size();
-            Iterator iterator = data.iterator();
+    public QARetrieval() {}
 
-            JSONObject dataElement;
-            JSONObject answerObject;
-            String answer;
+    public void parseJSON(String filepath) {
+        this.filepath = filepath;
+        try {
+            parser = new JSONParser();
+            json = (JSONObject) parser.parse(new FileReader(this.filepath));
+            data = (JSONArray) json.get("Data");
+            size = data.size();
+            iterator = data.iterator();
+
             answers = new String[size];
-            String question;
             questions = new String[size];
 
             for (int i = 0; i < size; i++) {
