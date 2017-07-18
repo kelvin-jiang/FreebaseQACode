@@ -19,21 +19,24 @@ public class TagMe {
     private Page page;
     private String url;
     private String json;
-    private JSONParser parser = new JSONParser();
+    private JSONParser parser;
     private JSONObject annotationsObject;
     private JSONArray annotations;
     private Iterator iterator;
     private JSONObject annotationElement;
     private double rho;
     private String tag;
-
-    private List<String> tags = new ArrayList<>();
+    private List<String> tags;
 
     public TagMe(double threshold) {
         RHO_THRESHOLD = threshold;
 
         client = new WebClient();
         client.getOptions().setUseInsecureSSL(true);
+
+        parser = new JSONParser();
+
+        tags = new ArrayList<>();
     }
 
     public List<String> tag(String question) {
@@ -60,6 +63,7 @@ public class TagMe {
                     tags.add(tag.toLowerCase().trim());
                 }
             }
+            client.close();
         } catch (ParseException | IOException e) {
             e.printStackTrace();
         }

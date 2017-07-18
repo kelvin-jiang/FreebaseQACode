@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -17,9 +16,10 @@ public class Main {
         TagMe tagger = new TagMe(RHO_THRESHOLD);
         HashSet<String> tags = new HashSet<>();
 
+        //CONSIDER MOVING TO FREEBASEDBHANDLER
         FreebaseDBHandler db = new FreebaseDBHandler();
         HashSet<String> answerIDs = new HashSet<>(); //bottom-up
-        List<String> answerIDsList = new ArrayList<>(answerIDs);
+        List<String> answerIDsList = new ArrayList<>(answerIDs); //answerIDsList is a copy of answerIDs in ArrayList form
         List<String> tagIDs = new ArrayList<>(); //top-down
         List<NTriple> triples = new ArrayList<>();
         List<String> namesAliasesRowIDs = new ArrayList<>();
@@ -32,12 +32,12 @@ public class Main {
             answer = answerBank[i];
             System.out.println(question + " (" + answer + ")");
 
-            if (question == null || answer == null)
-                continue; //skip the QA pair if Q or A is null
+            if (question == null || answer == null) continue; //skips the QA pair if Q or A is null
 
             tags.addAll(tagger.tag(question)); //uses a hashset to ensure unique tags
             if (tags.size() != 0)
                 tags.remove(answer.toLowerCase().trim()); //removes tags that are equivalent to the answer
+            if (tags.size() == 0) continue; //skips the QA pair if there are no tags
             System.out.println("Tags: " + tags);
 
             //top-down + bottom-up search
@@ -49,15 +49,14 @@ public class Main {
                     triples = db.ID2Triples(tagID, triples);
                     for (NTriple triple : triples) {
                         if (answerIDs.contains(triple.getObjectID())) { //if the object of the triple has an ID matching an answer ID, check its name
-                            namesAliases = db.objectID2NamesAliases(triple.getObjectID(), namesAliasesRowIDs, namesAliases); //gets names/aliases from object of current triple
+                            namesAliases = db.objectID2NamesAliases(triple.getObjectID(), namesAliasesRowIDs,
+                                    namesAliases); //gets names/aliases from object of current triple
                             triple.setSubject(tag);
                             for (String nameAlias : namesAliases) { //repeats for each name/alias
-                                triple.setObject(nameAlias); //adds object name to triple
                                 if (nameAlias.toLowerCase().trim().equals(answer.toLowerCase().trim())) {
-                                    String[] saveData = {triple.getSubject(), triple.getSubjectID(), triple.getPredicate(), triple.getObjectID(), triple.getObject(),
-                                            question, answer};
+                                    triple.setObject(nameAlias); //adds object name to triple
                                     matches++;
-                                    System.out.println("TO SAVE: " + Arrays.toString(saveData));
+                                    System.out.printf("TO SAVE: %s     %s     %s", triple.toString(), question, answer);
                                     break; //no need to run through all names/aliases of a single object after obtaining a match
                                 }
                             }
@@ -72,6 +71,8 @@ public class Main {
             tags.clear();
             answerIDs.clear();
             answerIDsList.clear();
+
+            System.gc();
 
             //top-down search
             /*for (String tag : tags) { //repeats for each tag
