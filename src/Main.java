@@ -3,9 +3,22 @@ import java.util.HashSet;
 import java.util.List;
 
 public class Main {
-    private static final double RHO_THRESHOLD = 0.15;
+    private static double RHO_THRESHOLD = 0.15;
 
     public static void main(String[] args) {
+        int startIndex = 0;
+        int endIndex = 1000000;
+
+        if (args.length == 2 || args.length > 4) {
+            System.out.printf("Usage: \tjava Main QA_FILE.json\n\tjava Main QA_FILE.json startIndex endIndex" +
+                    "\n\tjava Main QA_FILE.json startIndex endIndex rhoThreshold");
+            System.exit(1);
+        }
+        if (args.length == 4) RHO_THRESHOLD = Double.parseDouble(args[3]);
+        if (args.length >= 3) {
+            startIndex = Integer.parseInt(args[1]);
+            endIndex = Integer.parseInt(args[2]);
+        }
         String FILEPATH = args[0]; //takes command line argument as the filepath for the JSON file to be read
 
         QARetrieval retrieval = new QARetrieval(FILEPATH); //retrieve QA from the JSON file
@@ -27,7 +40,9 @@ public class Main {
 
         int matches = 0;
 
-        for (int i = 0; i < questionBank.length; i++) {
+        if (startIndex < 0) startIndex = 0;
+        if (endIndex < startIndex || endIndex > questionBank.length) endIndex = questionBank.length;
+        for (int i = startIndex; i < endIndex; i++) {
             question = questionBank[i];
             answer = answerBank[i];
             System.out.println(question + " (" + answer + ")");
@@ -56,7 +71,8 @@ public class Main {
                                 if (nameAlias.toLowerCase().trim().equals(answer.toLowerCase().trim())) {
                                     triple.setObject(nameAlias); //adds object name to triple
                                     matches++;
-                                    System.out.printf("TO SAVE: %s     %s     %s", triple.toString(), question, answer);
+                                    System.out.printf("TO SAVE: %s     %s     %s\n", triple.toString(), question, answer);
+                                    System.out.printf("Processed %d questions with %d Matches\n", i - startIndex + 1, matches);
                                     break; //no need to run through all names/aliases of a single object after obtaining a match
                                 }
                             }
