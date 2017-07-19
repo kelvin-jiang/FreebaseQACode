@@ -43,10 +43,10 @@ public class NTriple {
 
     @Override
     public String toString() {
-        return String.format("%s     %s     %s     %s     %s", subject, subjectID, predicate, objectID, object);
+        return String.format("%s | %s | %s | %s | %s", subject, subjectID, predicate, objectID, object);
     }
 
     public String toReverseString() {
-        return String.format("%s     %s     %s     %s     %s", object, objectID, predicate, subjectID, subject);
+        return String.format("%s | %s | %s | %s | %s", object, objectID, predicate, subjectID, subject);
     }
 }

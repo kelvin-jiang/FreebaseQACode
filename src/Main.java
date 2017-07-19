@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class Main {
     //---VARIABLES FOR PROCESSING COMMAND LINE ARGUMENTS---
@@ -11,21 +8,21 @@ public class Main {
     private static double rhoThreshold = 0.2;
 
     public static void main(String[] args) {
-        //---VARIABLES AND OBJECTS, listed in the order they are used---
+        //---OBJECTS AND FIELDS---
         QARetrieval retrieval = new QARetrieval();
         String[] questionBank, answerBank;
         String question, answer;
         TagMe tagger;
-        Set<String> tags = new HashSet<>();
         FreebaseDBHandler db = new FreebaseDBHandler();
-        Set<String> answerIDs = new HashSet<>();
-        List<NTriple> answerTriples = new ArrayList<>();
-        List<NTriple> mediatorTriples = new ArrayList<>();
-        Set<String> mediatorIDs = new HashSet<>();
+        Set<String> tags = new HashSet<>(); //uses a hashset to ensure unique tags
         Set<String> tagIDs = new HashSet<>();
-        List<NTriple> triples = new ArrayList<>();
-
-        int matches = 0;
+        List<NTriple> tagTriples = new ArrayList<>();
+        Map<String, NTriple> mediatorTriples = new HashMap<>();
+        NTriple mediatorTriple;
+        List<NTriple> answerTriples = new ArrayList<>();
+        Set<String> answerIDs = new HashSet<>();
+        Set<List<String>> matches = new HashSet<>(); //matches are saved uniquely based on subject, predicate, mediatorPredicate, object
+        List<String> match = new ArrayList<>();
 
         //---FUNCTIONS---
         processArguments(args);
@@ -36,9 +33,8 @@ public class Main {
 
         tagger = new TagMe(rhoThreshold); //sets up the TagMe tagger
 
-        //checks the user-inputted bounds of the outermost loop, startIndex and endIndex
-        if (startIndex < 0) startIndex = 0; //startIndex has a minimum value of 0
-        if (endIndex < startIndex || endIndex > questionBank.length) endIndex = questionBank.length; //endIndex cannot be less than startIndex
+        if (startIndex < 0) startIndex = 0; //ensures startIndex has a minimum value of 0
+        if (endIndex < startIndex || endIndex > questionBank.length) endIndex = questionBank.length; //ensures endIndex cannot be less than startIndex
         for (int i = startIndex; i < endIndex; i++) {
             question = questionBank[i];
             answer = answerBank[i];
@@ -46,74 +42,68 @@ public class Main {
 
             if (question == null || answer == null) continue; //skips the QA pair if Q or A is null
 
-            tags.addAll(tagger.tag(question)); //uses a hashset to ensure unique tags
+            tags.addAll(tagger.tag(question));
             if (tags.size() != 0)
                 tags.remove(answer.toLowerCase().trim()); //removes tags that are equivalent to the answer
             if (tags.size() == 0) continue; //skips the QA pair if there are no tags
-            System.out.println("Tags: " + tags);
+            System.out.println("TAGS: " + tags);
 
             //bottom-up
             answerIDs = db.nameAlias2IDs(answer, answerIDs); //prepares all freebase IDs with a name or alias matching the answer
             for (String answerID : answerIDs) {
                 answerTriples = db.ID2Triples(answerID, answerTriples);
-		//System.out.println(answerID + ": " + answerTriples.size());
-		for (NTriple answerTriple : answerTriples) {
-		    if (db.isIDMediator(answerTriple.getObjectID())) {
-			mediatorTriples.add(answerTriple);
-			mediatorIDs.add(answerTriple.getObjectID());
-		    }
-		}
-		answerTriples.clear();	    
-	    }
+                for (NTriple answerTriple : answerTriples) {
+                    if (db.isIDMediator(answerTriple.getObjectID()))
+                        mediatorTriples.put(answerTriple.getObjectID(), answerTriple);
+                }
+                answerTriples.clear();
+            }
 
             //top-down
             for (String tag : tags) {
                 tagIDs = db.nameAlias2IDs(tag, tagIDs);
                 for (String tagID : tagIDs) {
-                    triples = db.ID2Triples(tagID, triples);
-                    for (NTriple triple : triples) {
-                        if (answerIDs.contains(triple.getObjectID())) { //if the object of the triple has an ID matching an answer ID, check its name
-                            //namesAliases = db.objectID2NamesAliases(triple.getObjectID(), namesAliasesRowIDs, namesAliases); //gets names/aliases from object of current triple
+                    tagTriples = db.ID2Triples(tagID, tagTriples);
+                    for (NTriple triple : tagTriples) {
+                        if (answerIDs.contains(triple.getObjectID())) { //if the object of the triple has an ID matching an answer ID
                             triple.setSubject(tag);
-                            //for (String nameAlias : namesAliases) {
-                                //if (nameAlias.toLowerCase().trim().equals(answer.toLowerCase().trim())) { //if the name/alias matches the answer, save all data
-                                    triple.setObject(answer);
-                                    //triple.setObject(nameAlias); //adds object name to triple
-                                    matches++;
-                                    System.out.printf("TO SAVE: %s     %s     %s\n", triple.toString(), question, answer);
-                                    System.out.printf("PROCESSED %d QUESTIONS WITH %d MATCHES\n", i - startIndex + 1, matches);
-                                    //break; //no need to run through all names/aliases of a single object after obtaining a match
-                                //}
-                            //}
-                            //namesAliasesRowIDs.clear();
-                            //namesAliases.clear();
-                        }
-                        else if (mediatorIDs.contains(triple.getObjectID())) {
-                            triple.setSubject(tag); //no object name for triple because mediator
-                            for (NTriple mediatorTriple : mediatorTriples) { //go through mediator triples to find the corresponding one
-                                if (mediatorTriple.getObjectID().equals(triple.getObjectID())) {
-                                    mediatorTriple.setSubject(answer); //no object name for mediatorTriple because mediator
-                                    matches++;
-                                    System.out.printf("TO SAVE: %s     %s     %s     %s\n", triple.toString(), mediatorTriple.toReverseString(), question, answer);
-                                    System.out.printf("PROCESSED %d QUESTIONS WITH %d MATCHES\n", i - startIndex + 1, matches);
-                                    break; //ugly solution since there can be duplicates in mediatorTriples
-                                }
+                            triple.setObject(answer);
+                            match.add(triple.getSubject());
+                            match.add(triple.getPredicate());
+                            match.add(null);
+                            match.add(triple.getObject());
+                            if (!matches.contains(match)) {
+                                matches.add(match);
+                                System.out.printf("MATCHED1: %s | %s | %s\n", triple.toString(), question, answer);
+                                System.out.printf("PROCESSED %d QUESTIONS WITH %d MATCHES\n", i - startIndex + 1, matches.size());
                             }
                         }
+                        else if (mediatorTriples.containsKey(triple.getObjectID())) { //if the object of the triple has an ID matching a mediator
+                            triple.setSubject(tag); //no object name for triple because mediator
+                            mediatorTriple = mediatorTriples.get(triple.getObjectID());
+                            mediatorTriple.setSubject(answer); //no object name for mediatorTriple because mediator
+                            match.add(triple.getSubject());
+                            match.add(triple.getPredicate());
+                            match.add(mediatorTriple.getPredicate());
+                            match.add(mediatorTriple.getSubject());
+                            if (!matches.contains(match)) {
+                                matches.add(match);
+                                System.out.printf("MATCHED2: %s | %s | %s | %s\n", triple.toString(), mediatorTriple.toReverseString(), question, answer);
+                                System.out.printf("PROCESSED %d QUESTIONS WITH %d MATCHES\n", i - startIndex + 1, matches.size());
+                            }
+                        }
+                        match.clear();
                     }
-                    triples.clear();
+                    tagTriples.clear();
                 }
                 tagIDs.clear();
             }
-            tags.clear();
-            answerIDs.clear();
-            answerTriples.clear();
             mediatorTriples.clear();
-            mediatorIDs.clear();
-
-            System.gc(); //prompts Java's garbage collector to clean up the cleared Lists and HashSets
+            answerIDs.clear();
+            tags.clear();
+            System.gc(); //prompts Java's garbage collector to clean up data structures
         }
-        System.out.println("Number of Matches: " + matches);
+        System.out.println("PROCESSING COMPLETE\nNUMBER OF MATCHES: " + matches.size());
     }
 
     private static void processArguments(String[] args) {
