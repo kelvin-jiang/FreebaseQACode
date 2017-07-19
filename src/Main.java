@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class Main {
     //---VARIABLES FOR PROCESSING COMMAND LINE ARGUMENTS---
@@ -15,15 +16,13 @@ public class Main {
         String[] questionBank, answerBank;
         String question, answer;
         TagMe tagger;
-        HashSet<String> tags = new HashSet<>();
+        Set<String> tags = new HashSet<>();
         FreebaseDBHandler db = new FreebaseDBHandler();
-        HashSet<String> answerIDs = new HashSet<>();
-        List<String> answerIDsList = new ArrayList<>(answerIDs); //answerIDsList is a copy of answerIDs in ArrayList form
+        Set<String> answerIDs = new HashSet<>();
         List<NTriple> answerTriples = new ArrayList<>();
-        List<String> mediatorNamesAliasesRowIDs = new ArrayList<>();
         List<NTriple> mediatorTriples = new ArrayList<>();
-        HashSet<String> mediatorIDs = new HashSet<>();
-        List<String> tagIDs = new ArrayList<>();
+        Set<String> mediatorIDs = new HashSet<>();
+        Set<String> tagIDs = new HashSet<>();
         List<NTriple> triples = new ArrayList<>();
 
         int matches = 0;
@@ -54,14 +53,15 @@ public class Main {
             System.out.println("Tags: " + tags);
 
             //bottom-up
-            answerIDs.addAll(db.nameAlias2IDs(answer, answerIDsList)); //prepares all freebase IDs with a name or alias matching the answer
+            answerIDs = db.nameAlias2IDs(answer, answerIDs); //prepares all freebase IDs with a name or alias matching the answer
             for (String answerID : answerIDs) {
                 answerTriples = db.ID2Triples(answerID, answerTriples);
-                mediatorTriples.addAll(db.triples2Mediators(answerTriples, mediatorNamesAliasesRowIDs, mediatorTriples));
-                //mediatorIDs.addAll(db.ID2MediatorIDs(answerID, answerObjectIDs, answerObjectNamesAliasesRowIDs, answerObjectNamesAliases, mediatorIDsList));
-            }
-            for (NTriple mediatorTriple : mediatorTriples) {
-                mediatorIDs.add(mediatorTriple.getObjectID());
+                for (NTriple answerTriple : answerTriples) {
+                    if (db.isIDMediator(answerTriple.getObjectID())) {
+                        mediatorTriples.add(answerTriple);
+                        mediatorIDs.add(answerTriple.getObjectID());
+                    }
+                }
             }
 
             //top-down
@@ -105,9 +105,7 @@ public class Main {
             }
             tags.clear();
             answerIDs.clear();
-            answerIDsList.clear();
             answerTriples.clear();
-            mediatorNamesAliasesRowIDs.clear();
             mediatorTriples.clear();
             mediatorIDs.clear();
 
