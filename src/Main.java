@@ -58,8 +58,8 @@ public class Main {
                 answerTriples = db.ID2Triples(answerID, answerTriples);
                 for (NTriple answerTriple : answerTriples) {
                     if (db.isIDMediator(answerTriple.getObjectID())) {
-                        mediatorTriples.add(answerTriple);
-                        mediatorIDs.add(answerTriple.getObjectID());
+                        //mediatorTriples.add(answerTriple);
+                        //mediatorIDs.add(answerTriple.getObjectID());
                     }
                 }
             }
