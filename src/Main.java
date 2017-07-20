@@ -23,6 +23,8 @@ public class Main {
         Set<String> answerIDs = new HashSet<>();
         Set<List<String>> matches = new HashSet<>(); //matches are saved uniquely based on subject, predicate, mediatorPredicate, object
         List<String> match = new ArrayList<>();
+	boolean matched;
+	int uniqueMatches = 0;
 
         //---FUNCTIONS---
         processArguments(args);
@@ -39,6 +41,8 @@ public class Main {
             question = questionBank[i];
             answer = answerBank[i];
             System.out.println(question + " (" + answer + ")");
+	    
+	    matched = false;
 
             if (question == null || answer == null) continue; //skips the QA pair if Q or A is null
 
@@ -78,8 +82,9 @@ public class Main {
                             match.add(triple.getObject());
                             if (!matches.contains(match)) {
                                 matches.add(match);
-                                System.out.printf("MATCHED1: %s | %s | %s\n", triple.toString(), question, answer);
-                                System.out.printf("PROCESSED %d QUESTIONS WITH %d MATCHES\n", i - startIndex + 1, matches.size());
+                                matched = true;
+				System.out.printf("MATCHED1: %s | %s | %s\n", triple.toString(), question, answer);
+                                System.out.printf("PROCESSED %d QUESTIONS WITH %d MATCHES (%d UNIQUE MATCHES)\n", i - startIndex + 1, matches.size(), uniqueMatches + 1);
                             }
                         }
                         else if (mediatorTriples.containsKey(triple.getObjectID())) { //if the object of the triple has an ID matching a mediator
@@ -92,8 +97,9 @@ public class Main {
                             match.add(mediatorTriple.getSubject());
                             if (!matches.contains(match)) {
                                 matches.add(match);
+				matched = true;
                                 System.out.printf("MATCHED2: %s | %s | %s | %s\n", triple.toString(), mediatorTriple.toReverseString(), question, answer);
-                                System.out.printf("PROCESSED %d QUESTIONS WITH %d MATCHES\n", i - startIndex + 1, matches.size());
+                                System.out.printf("PROCESSED %d QUESTIONS WITH %d MATCHES (%d UNIQUE MATCHES)\n", i - startIndex + 1, matches.size(), uniqueMatches + 1);
                             }
                         }
                         match.clear();
@@ -106,7 +112,9 @@ public class Main {
             answerIDs.clear();
             tags.clear();
             System.gc(); //prompts Java's garbage collector to clean up data structures
-        }
+	    if (matched == true)
+		uniqueMatches++;
+	}
         System.out.println("PROCESSING COMPLETE\nNUMBER OF MATCHES: " + matches.size());
     }
 
