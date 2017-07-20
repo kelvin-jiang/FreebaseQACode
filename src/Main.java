@@ -52,6 +52,8 @@ public class Main {
             answerIDs = db.nameAlias2IDs(answer, answerIDs); //prepares all freebase IDs with a name or alias matching the answer
             for (String answerID : answerIDs) {
                 answerTriples = db.ID2Triples(answerID, answerTriples);
+		if (answerTriples == null)
+		    continue;
                 for (NTriple answerTriple : answerTriples) {
                     if (db.isIDMediator(answerTriple.getObjectID()))
                         mediatorTriples.put(answerTriple.getObjectID(), answerTriple);
@@ -64,6 +66,8 @@ public class Main {
                 tagIDs = db.nameAlias2IDs(tag, tagIDs);
                 for (String tagID : tagIDs) {
                     tagTriples = db.ID2Triples(tagID, tagTriples);
+		    if (tagTriples == null)
+			continue;
                     for (NTriple triple : tagTriples) {
                         if (answerIDs.contains(triple.getObjectID())) { //if the object of the triple has an ID matching an answer ID
                             triple.setSubject(tag);
