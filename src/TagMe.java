@@ -62,6 +62,7 @@ public class TagMe {
                         tag = tag.substring(0, tag.indexOf("(") - 1);
                     tags.add(tag.toLowerCase().trim());
                 }
+                iterator.remove();
             }
             client.close();
             annotationsObject.clear();

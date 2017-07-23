@@ -49,6 +49,8 @@ public class QARetrieval {
                 //get the question
                 question = (String) dataElement.get("Question");
                 questions[i] = question;
+
+                iterator.remove();
             }
             json.clear();
             data.clear();
