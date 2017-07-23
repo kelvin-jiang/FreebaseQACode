@@ -28,7 +28,6 @@ public class MySQLHandler {
         try {
             statement = connection.createStatement();
             queryResult = statement.executeQuery(query);
-            statement.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -71,6 +70,11 @@ public class MySQLHandler {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        try {
+            statement.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return resultList;
     }
 
@@ -89,6 +93,7 @@ public class MySQLHandler {
                 list2.add(queryResult.getString(column2));
             }
             result2DList.add(list2);
+            statement.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
