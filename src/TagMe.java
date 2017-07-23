@@ -64,6 +64,9 @@ public class TagMe {
                 }
             }
             client.close();
+            annotationsObject.clear();
+            annotations.clear();
+            annotationElement.clear();
         } catch (ParseException | IOException e) {
             e.printStackTrace();
         }

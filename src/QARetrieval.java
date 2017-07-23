@@ -50,6 +50,10 @@ public class QARetrieval {
                 question = (String) dataElement.get("Question");
                 questions[i] = question;
             }
+            json.clear();
+            data.clear();
+            dataElement.clear();
+            answerObject.clear();
         } catch (ParseException | IOException e) {
             e.printStackTrace();
         }

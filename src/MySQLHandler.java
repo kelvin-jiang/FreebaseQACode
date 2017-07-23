@@ -1,12 +1,10 @@
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MySQLHandler {
     private Connection connection;
+    private Statement statement;
     private ResultSet queryResult;
 
     List<String> list1 = new ArrayList<>();
@@ -28,7 +26,8 @@ public class MySQLHandler {
     //---MYSQL METHODS---
     public void queryTable(String query) {
         try {
-            queryResult = connection.createStatement().executeQuery(query);
+            statement = connection.createStatement();
+            queryResult = statement.executeQuery(query);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -36,7 +35,8 @@ public class MySQLHandler {
 
     public void updateTable(String query) {
         try {
-            connection.createStatement().executeUpdate(query);
+            statement = connection.createStatement();
+            statement.executeUpdate(query);
         } catch (SQLException e) {
             e.printStackTrace();
         }

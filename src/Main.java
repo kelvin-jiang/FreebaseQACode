@@ -4,7 +4,7 @@ public class Main {
     //---VARIABLES FOR PROCESSING COMMAND LINE ARGUMENTS---
     private static String filepath;
     private static int startIndex = 0;
-    private static int endIndex = 1000000; //arbitrary value
+    private static int endIndex = Integer.MAX_VALUE; //arbitrary value
     private static double rhoThreshold = 0.2;
 
     public static void main(String[] args) {
@@ -14,6 +14,7 @@ public class Main {
         String question, answer;
         TagMe tagger;
         FreebaseDBHandler db = new FreebaseDBHandler();
+        List<String> IDsList = new ArrayList<>(); //placeholder list for nameAlias2IDs method
         Set<String> tags = new HashSet<>(); //uses a hashset to ensure unique tags
         Set<String> tagIDs = new HashSet<>();
         List<NTriple> tagTriples = new ArrayList<>();
@@ -23,8 +24,11 @@ public class Main {
         Set<String> answerIDs = new HashSet<>();
         Set<List<String>> matches = new HashSet<>(); //matches are saved uniquely based on subject, predicate, mediatorPredicate, object
         List<String> match = new ArrayList<>();
-	boolean matched;
-	int uniqueMatches = 0;
+	    boolean matched;
+	    int uniqueMatches = 0;
+	    long startTime = System.currentTimeMillis();
+	    long previousTime = System.currentTimeMillis();
+	    long currentTime;
 
         //---FUNCTIONS---
         processArguments(args);
@@ -42,7 +46,7 @@ public class Main {
             answer = answerBank[i];
             System.out.println(question + " (" + answer + ")");
 	    
-	    matched = false;
+	        matched = false;
 
             if (question == null || answer == null) continue; //skips the QA pair if Q or A is null
 
@@ -53,11 +57,11 @@ public class Main {
             System.out.println("TAGS: " + tags);
 
             //bottom-up
-            answerIDs = db.nameAlias2IDs(answer, answerIDs); //prepares all freebase IDs with a name or alias matching the answer
+            answerIDs = db.nameAlias2IDs(answer, IDsList, answerIDs); //prepares all freebase IDs with a name or alias matching the answer
             for (String answerID : answerIDs) {
                 answerTriples = db.ID2Triples(answerID, answerTriples);
-		if (answerTriples == null)
-		    continue;
+                if (answerTriples == null)
+                    continue;
                 for (NTriple answerTriple : answerTriples) {
                     if (db.isIDMediator(answerTriple.getObjectID()))
                         mediatorTriples.put(answerTriple.getObjectID(), answerTriple);
@@ -67,11 +71,11 @@ public class Main {
 
             //top-down
             for (String tag : tags) {
-                tagIDs = db.nameAlias2IDs(tag, tagIDs);
+                tagIDs = db.nameAlias2IDs(tag, IDsList, tagIDs);
                 for (String tagID : tagIDs) {
                     tagTriples = db.ID2Triples(tagID, tagTriples);
-		    if (tagTriples == null)
-			continue;
+                    if (tagTriples == null)
+                        continue;
                     for (NTriple triple : tagTriples) {
                         if (answerIDs.contains(triple.getObjectID())) { //if the object of the triple has an ID matching an answer ID
                             triple.setSubject(tag);
@@ -83,7 +87,7 @@ public class Main {
                             if (!matches.contains(match)) {
                                 matches.add(match);
                                 matched = true;
-				System.out.printf("MATCHED1: %s | %s | %s\n", triple.toString(), question, answer);
+				                System.out.printf("MATCHED1: %s | %s | %s\n", triple.toString(), question, answer);
                                 System.out.printf("PROCESSED %d QUESTIONS WITH %d MATCHES (%d UNIQUE MATCHES)\n", i - startIndex + 1, matches.size(), uniqueMatches + 1);
                             }
                         }
@@ -97,7 +101,7 @@ public class Main {
                             match.add(mediatorTriple.getSubject());
                             if (!matches.contains(match)) {
                                 matches.add(match);
-				matched = true;
+				                matched = true;
                                 System.out.printf("MATCHED2: %s | %s | %s | %s\n", triple.toString(), mediatorTriple.toReverseString(), question, answer);
                                 System.out.printf("PROCESSED %d QUESTIONS WITH %d MATCHES (%d UNIQUE MATCHES)\n", i - startIndex + 1, matches.size(), uniqueMatches + 1);
                             }
@@ -112,10 +116,12 @@ public class Main {
             answerIDs.clear();
             tags.clear();
             System.gc(); //prompts Java's garbage collector to clean up data structures
-	    if (matched == true)
-		uniqueMatches++;
-	}
+            if (matched) uniqueMatches++;
+	        System.out.printf("TIME: %dS FOR QUESTION AND %dS SINCE START\n", (System.currentTimeMillis() - previousTime)/1000, (System.currentTimeMillis() - startTime)/1000);
+            previousTime = System.currentTimeMillis();
+        }
         System.out.println("PROCESSING COMPLETE\nNUMBER OF MATCHES: " + matches.size());
+        matches.clear();
     }
 
     private static void processArguments(String[] args) {
