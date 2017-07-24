@@ -15,7 +15,7 @@ public class Main {
         TagMe tagger;
         FreebaseDBHandler db = new FreebaseDBHandler();
         List<String> IDsList = new ArrayList<>(); //placeholder list for nameAlias2IDs method
-        Set<String> tags = new HashSet<>(); //uses a hashset to ensure unique tags
+        Map<String, String> tags = new HashMap<>(); //uses a hashset to ensure unique tags
         Set<String> tagIDs = new HashSet<>();
         List<NTriple> tagTriples = new ArrayList<>();
         Map<String, NTriple> mediatorTriples = new HashMap<>();
@@ -28,7 +28,6 @@ public class Main {
 	    int uniqueMatches = 0;
 	    long startTime = System.currentTimeMillis();
 	    long previousTime = System.currentTimeMillis();
-	    long currentTime;
 
         //---FUNCTIONS---
         processArguments(args);
@@ -44,13 +43,14 @@ public class Main {
         for (int i = startIndex; i < endIndex; i++) {
             question = questionBank[i];
             answer = answerBank[i];
-            System.out.println(question + " (" + answer + ")");
+            System.out.printf("%d. %s (%s)\n", i+1, question, answer);
 	    
 	        matched = false;
 
             if (question == null || answer == null) continue; //skips the QA pair if Q or A is null
 
-            tags.addAll(tagger.tag(question));
+            tagger.tag(question);
+            tags.putAll(tagger.getTags());
             if (tags.size() != 0)
                 tags.remove(answer.toLowerCase().trim()); //removes tags that are equivalent to the answer
             if (tags.size() == 0) continue; //skips the QA pair if there are no tags
@@ -70,7 +70,7 @@ public class Main {
             }
 
             //top-down
-            for (String tag : tags) {
+            for (String tag : tags.keySet()) {
                 tagIDs = db.nameAlias2IDs(tag, IDsList, tagIDs);
                 for (String tagID : tagIDs) {
                     tagTriples = db.ID2Triples(tagID, tagTriples);
@@ -88,7 +88,6 @@ public class Main {
                                 matches.add(match);
                                 matched = true;
 				                System.out.printf("MATCHED1: %s | %s | %s\n", triple.toString(), question, answer);
-                                System.out.printf("PROCESSED %d QUESTIONS WITH %d MATCHES (%d UNIQUE MATCHES)\n", i - startIndex + 1, matches.size(), uniqueMatches + 1);
                             }
                         }
                         else if (mediatorTriples.containsKey(triple.getObjectID())) { //if the object of the triple has an ID matching a mediator
@@ -103,7 +102,6 @@ public class Main {
                                 matches.add(match);
 				                matched = true;
                                 System.out.printf("MATCHED2: %s | %s | %s | %s\n", triple.toString(), mediatorTriple.toReverseString(), question, answer);
-                                System.out.printf("PROCESSED %d QUESTIONS WITH %d MATCHES (%d UNIQUE MATCHES)\n", i - startIndex + 1, matches.size(), uniqueMatches + 1);
                             }
                         }
                         match.clear();
@@ -117,7 +115,8 @@ public class Main {
             tags.clear();
             System.gc(); //prompts Java's garbage collector to clean up data structures
             if (matched) uniqueMatches++;
-	        System.out.printf("TIME: %dS FOR QUESTION AND %dS SINCE START\n", (System.currentTimeMillis() - previousTime)/1000, (System.currentTimeMillis() - startTime)/1000);
+            System.out.printf("PROCESSED %d QUESTIONS WITH %d MATCHES (%d UNIQUE MATCHES)\n", i - startIndex + 1, matches.size(), uniqueMatches);
+            System.out.printf("TIME: %dS FOR QUESTION AND %dS SINCE START\n\n", (System.currentTimeMillis() - previousTime)/1000, (System.currentTimeMillis() - startTime)/1000);
             previousTime = System.currentTimeMillis();
         }
         System.out.println("PROCESSING COMPLETE\nNUMBER OF MATCHES: " + matches.size());

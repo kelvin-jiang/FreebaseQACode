@@ -9,9 +9,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class TagMe {
     private double rhoThreshold;
@@ -22,7 +20,7 @@ public class TagMe {
     private JSONArray annotations;
     private Iterator iterator;
     private JSONObject annotationElement;
-    private List<String> tags;
+    private Map<String, String> tags;
 
     public TagMe(double threshold) {
         rhoThreshold = threshold;
@@ -32,10 +30,10 @@ public class TagMe {
 
         parser = new JSONParser();
 
-        tags = new ArrayList<>();
+        tags = new HashMap<>();
     }
 
-    public List<String> tag(String question) {
+    public void tag(String question) {
         tags.clear(); //clear previous tags
         String url = "https://tagme.d4science.org/tagme/tag?gcube-token=e276e0d3-30d5-4c40-bc43-4e19eafb1d89-843339462&text=".concat(question);
 
@@ -56,7 +54,8 @@ public class TagMe {
                     String tag = (String) annotationElement.get("title");
                     if (tag.contains("(") && tag.contains(")")) //chops brackets off if the tag has brackets at the end due to Wikipedia
                         tag = tag.substring(0, tag.indexOf("(") - 1);
-                    tags.add(tag.toLowerCase().trim());
+                    String spot = (String) annotationElement.get("spot");
+                    tags.put(tag.toLowerCase().trim(), spot);
                 }
                 iterator.remove();
             }
@@ -67,6 +66,10 @@ public class TagMe {
         } catch (ParseException | IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public Map<String, String> getTags() {
         return tags;
     }
+
 }
