@@ -51,6 +51,7 @@ public class Main {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+                System.exit(1);
             }
         }
         else {
@@ -156,15 +157,19 @@ public class Main {
     }
 
     private static void processArguments(String[] args) {
-        if (args.length == 2 || args.length > 4) {
-            System.out.printf("USAGE: \tjava Main [path to .JSON or .TXT file]\n\tjava Main [path to .JSON or .TXT file] [start index] " +
-                    "[end index]\n\tjava Main [path to .JSON or .TXT file] [start index] [end index] [rho threshold]\n");
+        if (args.length > 4) {
+            System.out.printf("USAGE: \tjava Main [path to .JSON or .TXT file]\n\tjava Main [path to .JSON or .TXT file] [start index]\n\t" +
+                    "java Main [path to .JSON or .TXT file] [start index] [end index]\n\tjava Main [path to .JSON or .TXT file] [start index] " +
+                    "[end index] [rho threshold]\n");
             System.exit(1);
         }
-        if (args.length >= 3) {
+        if (args.length >= 2) {
             startIndex = Integer.parseInt(args[1]);
-            endIndex = Integer.parseInt(args[2]);
-            if (args.length == 4) rhoThreshold = Double.parseDouble(args[3]);
+            if (args.length >= 3) {
+                endIndex = Integer.parseInt(args[2]);
+                if (args.length == 4)
+                    rhoThreshold = Double.parseDouble(args[3]);
+            }
         }
         filepath = args[0];
         if (args[0].contains(".txt"))

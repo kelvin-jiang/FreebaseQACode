@@ -56,7 +56,7 @@ public class QARetrievalMain {
 
     private static void processArguments(String[] args) {
         if (args.length != 1) {
-            System.out.println("Usage: java QARetrievalMain [path to .JSON file]");
+            System.out.println("USAGE: java QARetrievalMain [path to .JSON file]");
         }
         else filepath = args[0];
     }

@@ -16,10 +16,11 @@ public class TagMe {
     private WebClient client;
     private Page page;
     private JSONParser parser;
-    private JSONObject annotationsObject;
+    private JSONObject json;
     private JSONArray annotations;
     private Iterator iterator;
     private JSONObject annotationElement;
+    private Object rhoValue = new Object();
     private Map<String, String> tags;
 
     public TagMe(double threshold) {
@@ -39,28 +40,38 @@ public class TagMe {
 
         try {
             page = client.getPage(url); //connects to specific TagMe page
-            String json = page.getWebResponse().getContentAsString();
+            String jsonString = page.getWebResponse().getContentAsString();
 
-            annotationsObject = (JSONObject) parser.parse(json);
-            annotations = (JSONArray) annotationsObject.get("annotations");
+            json = (JSONObject) parser.parse(jsonString);
+            annotations = (JSONArray) json.get("annotations");
             iterator = annotations.iterator();
 
             int size = annotations.size();
             for (int i = 0; i < size; i++) {
                 //get an annotation
                 annotationElement = (JSONObject) iterator.next();
-                double rho = (double) annotationElement.get("rho");
+                rhoValue = annotationElement.get("rho");
+                double rho;
+                if (rhoValue instanceof  Long) //when rho = 1 from TagMe, it becomes an instanceof Long which cannot be cast
+                    rho = ((Long) rhoValue).doubleValue();
+                else
+                    rho = (double) rhoValue;
+
                 if (rho > rhoThreshold) {
                     String tag = (String) annotationElement.get("title");
-                    if (tag.contains("(") && tag.contains(")")) //chops brackets off if the tag has brackets at the end due to Wikipedia
-                        tag = tag.substring(0, tag.indexOf("(") - 1);
+                    if (tag != null) {
+                        if (tag.contains("(") && tag.contains(")")) //chops brackets off if the tag has brackets at the end due to Wikipedia
+                            if (tag.indexOf("(") != 0)
+                                tag = tag.substring(0, tag.indexOf("(") - 1);
+                        tag = tag.toLowerCase().trim();
+                    }
                     String spot = (String) annotationElement.get("spot");
-                    tags.put(tag.toLowerCase().trim(), spot);
+                    tags.put(tag, spot);
                 }
                 iterator.remove();
             }
             client.close();
-            annotationsObject.clear();
+            json.clear();
             annotations.clear();
             annotationElement.clear();
         } catch (ParseException | IOException e) {
