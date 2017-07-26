@@ -1,43 +1,39 @@
-from fofe_ner_wrapper import fofe_ner_wrapper
-import sys, logging, argparse
+import sys, json, requests
 
-logger = logging.getLogger(__name__)
+url = 'http://www.eecs.yorku.ca/~nana/info.php'
+data = {
+    'mode' : 'dev',
+    'lang' : 'English'
+}
 
-class FOFE():
-    def __init__(self):
-        inference, score = annotator.annotate(text, isDevMode=True)
-        logger.info("inference: " + str(inference))
+input_filepath = sys.argv[1]
+index = input_filepath.find(".txt")
+output_filepath = input_filepath[:index] + "-FOFE" + input_filepath[index:] #filename.txt -> filename-fofe.txt
 
-    def tag(self):
-        input_filepath = 'libs\data.txt'
-        index = input_filepath.find(".txt")
-        output_filepath = input_filepath[:index] + "-fofe" + input_filepath[index:] #filename.txt -> filename-fofe.txt
-        with open(input_filepath, 'r') as inputfile:
-            with open(output_filepath, 'w') as outputfile:
-                for line in inputfile:
-                    line = line.replace("\n", " | added\n")
-                    outputfile.write(line)
+with open(input_filepath, 'r') as inputfile:
+    with open(output_filepath, 'w') as outputfile:
+        for line in inputfile:
+            data['text'] = line.split(" | ")[0]
+            r = requests.post(url, data=data)
+            rawjson = json.loads(r.text)
+            del rawjson['second_pass']
+            tags = []
+            for i in rawjson:
+                for j in i:
+                    for k in j:
+                        tags.append(k['entities'])
+            print(tags)
 
-if __name__ == "__main__":
-    logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+            #tags = rawjson["first_pass_hidden"]["0"]["entities"]
+            #tags.extend(rawjson["first_pass_shown"]["0"]["entities"])
+            #print(tags)
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('model1st', type=str, help='basename of model trained for 1st pass')
-    parser.add_argument('vocab1', type=str, help='case-insensitive word-vector for {eng,spa} or word-vector for cmn')
-    parser.add_argument('vocab2', type=str, help='case-sensitive word-vector for {eng,spa} or char-vector for cmn')
-    parser.add_argument('coreNLP_path', type=str, help='path to the Stanford CoreNLP folder.')
-    parser.add_argument('coreNLP_port', type=str, help='set the localhost port to coreNLP_port.')
-    parser.add_argument('--model2nd', type=str, default=None, help='basename of model trained for 2nd pass')
-    parser.add_argument('--KBP', action='store_true', default=False)
-    parser.add_argument('--gazetteer', type=str, default=None)
-    parser.add_argument('--port', type=int, default=20541)
-    args = parser.parse_args()
+            for tag in tags:
+                if 'NOM' in tag[1]:
+                    tags.remove(tag)
 
-    if args.KBP:
-        cls2ner = ['PER-NAME', 'ORG-NAME', 'GPE-NAME', 'LOC-NAME', 'FAC-NAME', 'PER-NOMINAL', 'ORG-NOMINAL', 'GPE-NOMINAL',
-                   'LOC-NOMINAL', 'FAC-NOMINAL']
+            print("real: " + str(tags))
 
-    annotator = fofe_ner_wrapper(args)
+            #line = line.replace("\n", " | added\n")
+            #outputfile.write(line)
 
-    tagger = FOFE()
-    tagger.tag()

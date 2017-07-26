@@ -9,6 +9,8 @@ public class Main {
     //---STATIC VARIABLES---
     private static String filepath;
     private static boolean isRetrieved = false;
+    private static boolean isTagMe = false;
+    private static boolean isFOFE = false;
     private static int startIndex = 0;
     private static int endIndex = Integer.MAX_VALUE; //arbitrary value
     private static double rhoThreshold = 0.2;
@@ -17,9 +19,8 @@ public class Main {
 
     public static void main(String[] args) {
         //---LOCAL OBJECTS AND FIELDS---
-        QARetrieval retrieval = new QARetrieval();
+        List<Map<String, String>> tagsBank = new ArrayList<>();
         String question, answer;
-        TagMe tagger;
         FreebaseDBHandler db = new FreebaseDBHandler();
         List<String> IDsList = new ArrayList<>(); //placeholder list for nameAlias2IDs method
         Map<String, String> tags = new HashMap<>(); //uses a hash structure to ensure unique tags
@@ -39,42 +40,57 @@ public class Main {
 
         //---FUNCTIONS---
         processArguments(args);
-
         if (isRetrieved) {
-            try (BufferedReader reader = new BufferedReader(new FileReader(filepath))) {
+            try {
+                BufferedReader reader = new BufferedReader(new FileReader(filepath));
                 String line;
-                String[] qa;
+                String[] lineData;
                 while ((line = reader.readLine()) != null) { //reads all QA lines from text file
-                    qa = line.split(" \\| ");
-                    questionBank.add(qa[0]);
-                    answerBank.add(qa[1]);
+                    lineData = line.split(" \\| ");
+                    questionBank.add(lineData[0]);
+                    answerBank.add(lineData[1]);
+                    if (isTagMe) {
+                        for (int i = 1; i < lineData.length/2; i++) {
+                            tags.put(lineData[i*2], lineData[i*2+1]); //temporarily uses the tags HashMap
+                        }
+                        tagsBank.add(new HashMap<>(tags));
+                        tags.clear();
+                    }
                 }
+                reader.close();
             } catch (IOException e) {
                 e.printStackTrace();
-                System.exit(1);
             }
         }
         else {
-            retrieval.parseJSON(filepath); //retrieves QAs from the JSON file
-            questionBank = retrieval.getQuestions();
-            answerBank = retrieval.getAnswers();
+            QARetrieval.parseJSON(filepath); //retrieves QAs from the JSON file
+            questionBank = QARetrieval.getQuestions();
+            answerBank = QARetrieval.getAnswers();
         }
 
-        tagger = new TagMe(rhoThreshold); //sets up the TagMe tagger
+        if (!isTagMe) {
+            TagMe.setRhoThreshold(rhoThreshold);
+            TagMe.startWebClient();
+        }
 
         if (startIndex < 0) startIndex = 0; //ensures startIndex has a minimum value of 0
         if (endIndex < startIndex || endIndex > questionBank.size()) endIndex = questionBank.size(); //ensures endIndex cannot be less than startIndex
         for (int i = startIndex; i < endIndex; i++) {
             question = questionBank.get(i);
             answer = answerBank.get(i);
-            System.out.printf("%d. %s (%s)\n", i+1, question, answer);
+            System.out.printf("QUESTION %d. %s (%s)\n", i+1, question, answer);
 	    
 	        matched = false;
 
             if (question == null || answer == null) continue; //skips the QA pair if Q or A is null
 
-            tagger.tag(question);
-            tags.putAll(tagger.getTags());
+            if (isTagMe)
+                tags.putAll(tagsBank.get(i));
+            else {
+                TagMe.tag(question);
+                tags.putAll(TagMe.getTags());
+            }
+
             if (tags.size() != 0) {
                 spot = tags.remove(answer.toLowerCase().trim()); //removes tags that are equivalent to the answer
                 if (spot != null) { //if a tag was removed, the collected spot is used as the tag
@@ -119,7 +135,7 @@ public class Main {
                             if (!matches.contains(match)) {
                                 matches.add(match);
                                 matched = true;
-				                System.out.printf("MATCHED1: %s | %s | %s\n", triple.toString(), question, answer);
+				                System.out.printf("MATCHED1: %s | %s | %s | %s\n", tags.get(tag), triple.toString(), question, answer);
                             }
                         }
                         else if (mediatorTriples.containsKey(triple.getObjectID())) { //if the object of the triple has an ID matching a mediator
@@ -133,7 +149,8 @@ public class Main {
                             if (!matches.contains(match)) {
                                 matches.add(match);
 				                matched = true;
-                                System.out.printf("MATCHED2: %s | %s | %s | %s\n", triple.toString(), mediatorTriple.toReverseString(), question, answer);
+                                System.out.printf("MATCHED2: %s | %s | %s | %s | %s\n", tags.get(tag), triple.toString(),
+                                        mediatorTriple.toReverseString(), question, answer);
                             }
                         }
                         match.clear();
@@ -154,6 +171,7 @@ public class Main {
         }
         System.out.printf("PROCESSING COMPLETE\nRESULTS: %d MATCHES (%d UNIQUE MATCHES)\n", matches.size(), uniqueMatches);
         matches.clear(); //can't be too safe
+        tagsBank.clear();
     }
 
     private static void processArguments(String[] args) {
@@ -172,7 +190,10 @@ public class Main {
             }
         }
         filepath = args[0];
-        if (args[0].contains(".txt"))
+        if (args[0].contains(".txt")) {
+            if (args[0].contains("TagMe")) isTagMe = true;
+            if (args[0].contains("FOFE")) isFOFE = true;
             isRetrieved = true;
+        }
     }
 }

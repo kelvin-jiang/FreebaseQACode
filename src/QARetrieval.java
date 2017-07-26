@@ -10,22 +10,16 @@ import java.util.Iterator;
 import java.util.List;
 
 public class QARetrieval {
-    private JSONParser parser;
-    private JSONObject json;
-    private JSONArray data;
-    private Iterator iterator;
-    private JSONObject dataElement;
-    private JSONObject answerElement;
-    private List<String> questions;
-    private List<String> answers;
+    private static JSONParser parser = new JSONParser();
+    private static JSONObject json;
+    private static JSONArray data;
+    private static Iterator iterator;
+    private static JSONObject dataElement;
+    private static JSONObject answerElement;
+    private static List<String> questions = new ArrayList<>();
+    private static List<String> answers = new ArrayList<>();
 
-    public QARetrieval() {
-        parser = new JSONParser();
-        questions = new ArrayList<>();
-        answers = new ArrayList<>();
-    }
-
-    public void parseJSON(String filepath) {
+    public static void parseJSON(String filepath) {
         try {
             json = (JSONObject) parser.parse(new FileReader(filepath));
             data = (JSONArray) json.get("Data");
@@ -56,11 +50,11 @@ public class QARetrieval {
         }
     }
 
-    public List<String> getQuestions() {
+    public static List<String> getQuestions() {
         return questions;
     }
 
-    public List<String> getAnswers() {
+    public static List<String> getAnswers() {
         return answers;
     }
 }

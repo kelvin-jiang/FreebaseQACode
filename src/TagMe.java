@@ -12,29 +12,27 @@ import java.io.IOException;
 import java.util.*;
 
 public class TagMe {
-    private double rhoThreshold;
-    private WebClient client;
-    private Page page;
-    private JSONParser parser;
-    private JSONObject json;
-    private JSONArray annotations;
-    private Iterator iterator;
-    private JSONObject annotationElement;
-    private Object rhoValue = new Object();
-    private Map<String, String> tags;
+    private static double rhoThreshold;
+    private static WebClient client;
+    private static Page page;
+    private static JSONParser parser = new JSONParser();
+    private static JSONObject json;
+    private static JSONArray annotations;
+    private static Iterator iterator;
+    private static JSONObject annotationElement;
+    private static Object rhoValue = new Object();
+    private static Map<String, String> tags = new HashMap<>();
 
-    public TagMe(double threshold) {
+    public static void setRhoThreshold(double threshold) {
         rhoThreshold = threshold;
-
-        client = new WebClient();
-        client.getOptions().setUseInsecureSSL(true);
-
-        parser = new JSONParser();
-
-        tags = new HashMap<>();
     }
 
-    public void tag(String question) {
+    public static void startWebClient() {
+        client = new WebClient();
+        client.getOptions().setUseInsecureSSL(true);
+    }
+
+    public static void tag(String question) {
         tags.clear(); //clear previous tags
         String url = "https://tagme.d4science.org/tagme/tag?gcube-token=e276e0d3-30d5-4c40-bc43-4e19eafb1d89-843339462&text=".concat(question);
 
@@ -79,7 +77,7 @@ public class TagMe {
         }
     }
 
-    public Map<String, String> getTags() {
+    public static Map<String, String> getTags() {
         return tags;
     }
 
