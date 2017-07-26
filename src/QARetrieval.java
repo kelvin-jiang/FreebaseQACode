@@ -5,7 +5,9 @@ import org.json.simple.parser.ParseException;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 public class QARetrieval {
     private JSONParser parser;
@@ -13,54 +15,52 @@ public class QARetrieval {
     private JSONArray data;
     private Iterator iterator;
     private JSONObject dataElement;
-    private JSONObject answerObject;
-    private String[] questions;
-    private String[] answers;
+    private JSONObject answerElement;
+    private List<String> questions;
+    private List<String> answers;
 
-    public QARetrieval() {}
+    public QARetrieval() {
+        parser = new JSONParser();
+        questions = new ArrayList<>();
+        answers = new ArrayList<>();
+    }
 
     public void parseJSON(String filepath) {
         try {
-            parser = new JSONParser();
             json = (JSONObject) parser.parse(new FileReader(filepath));
             data = (JSONArray) json.get("Data");
-            int size = data.size();
             iterator = data.iterator();
 
-            answers = new String[size];
-            questions = new String[size];
-
+            int size = data.size();
             for (int i = 0; i < size; i++) {
                 //get a QA set
                 dataElement = (JSONObject) iterator.next();
-
                 //get the answer
-                answerObject = (JSONObject) dataElement.get("Answer");
-                String answer = (String) answerObject.get("MatchedWikiEntityName");
-                answer = answer != null ? answer : (String) answerObject.get("NormalizedValue"); //if MatchedWikiEntityName is null, use NormalizedValue
+                answerElement = (JSONObject) dataElement.get("Answer");
+                String answer = (String) answerElement.get("MatchedWikiEntityName");
+                answer = answer != null ? answer : (String) answerElement.get("NormalizedValue"); //if MatchedWikiEntityName is null, use NormalizedValue
                 if (answer != null) //if either MatchedWikiEntityName or NormalizedValue returns a value
-                    answers[i] = answer.toLowerCase().trim();
-
+                    answers.add(answer.toLowerCase().trim());
                 //get the question
                 String question = (String) dataElement.get("Question");
-                questions[i] = question;
+                questions.add(question);
 
                 iterator.remove();
             }
-            json.clear();
-            data.clear();
+            answerElement.clear();
             dataElement.clear();
-            answerObject.clear();
+            data.clear();
+            json.clear();
         } catch (ParseException | IOException e) {
             e.printStackTrace();
         }
     }
 
-    public String[] getQuestions() {
+    public List<String> getQuestions() {
         return questions;
     }
 
-    public String[] getAnswers() {
+    public List<String> getAnswers() {
         return answers;
     }
 }

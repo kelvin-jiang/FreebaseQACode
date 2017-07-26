@@ -42,13 +42,13 @@ public class TagMe {
             String json = page.getWebResponse().getContentAsString();
 
             annotationsObject = (JSONObject) parser.parse(json);
-
             annotations = (JSONArray) annotationsObject.get("annotations");
             iterator = annotations.iterator();
+
             int size = annotations.size();
             for (int i = 0; i < size; i++) {
+                //get an annotation
                 annotationElement = (JSONObject) iterator.next();
-
                 double rho = (double) annotationElement.get("rho");
                 if (rho > rhoThreshold) {
                     String tag = (String) annotationElement.get("title");
