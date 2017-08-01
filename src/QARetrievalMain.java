@@ -10,7 +10,7 @@ public class QARetrievalMain extends QARetrieval {
         processArguments(args);
 
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(filepath.substring(0, filepath.indexOf(".")) + "-data.txt"));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(filepath.substring(0, filepath.indexOf(".")) + ".txt"));
 
             parseJSON(filepath);
             List<String> questions = getQuestions();
@@ -29,7 +29,7 @@ public class QARetrievalMain extends QARetrieval {
 
     private static void processArguments(String[] args) {
         if (args.length != 1) {
-            System.out.println("USAGE: java QARetrievalMain [path to .JSON file]");
+            System.out.println("USAGE:\tjava QARetrievalMain [path to .JSON file]");
             System.exit(1);
         }
         else filepath = args[0];

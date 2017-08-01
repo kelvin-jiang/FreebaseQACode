@@ -37,7 +37,7 @@ public class TagMeMain extends TagMe {
 
     private static void processArguments(String[] args) {
         if (args.length == 0 || args.length > 2) {
-            System.out.println("USAGE: java TagMeMain [path to .TXT file]\n\tjava TagMeMain [path to .TXT file] [rho threshold]");
+            System.out.println("USAGE:\tjava TagMeMain [path to .TXT file]\n\tjava TagMeMain [path to .TXT file] [rho threshold]");
             System.exit(1);
         }
         if (args.length == 2)

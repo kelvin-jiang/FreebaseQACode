@@ -9,8 +9,7 @@ public class Main {
     //---STATIC VARIABLES---
     private static String filepath;
     private static boolean isRetrieved = false;
-    private static boolean isTagMe = false;
-    private static boolean isFOFE = false;
+    private static boolean isTagged = false;
     private static int startIndex = 0;
     private static int endIndex = Integer.MAX_VALUE; //arbitrary value
     private static double rhoThreshold = 0.2;
@@ -49,7 +48,7 @@ public class Main {
                     lineData = line.split(" \\| ");
                     questionBank.add(lineData[0]);
                     answerBank.add(lineData[1]);
-                    if (isTagMe) {
+                    if (isTagged) {
                         for (int i = 1; i < lineData.length/2; i++) {
                             tags.put(lineData[i*2], lineData[i*2+1]); //temporarily uses the tags HashMap
                         }
@@ -67,8 +66,7 @@ public class Main {
             questionBank = QARetrieval.getQuestions();
             answerBank = QARetrieval.getAnswers();
         }
-
-        if (!isTagMe) {
+        if (!isTagged) {
             TagMe.setRhoThreshold(rhoThreshold);
             TagMe.startWebClient();
         }
@@ -84,7 +82,7 @@ public class Main {
 
             if (question == null || answer == null) continue; //skips the QA pair if Q or A is null
 
-            if (isTagMe)
+            if (isTagged)
                 tags.putAll(tagsBank.get(i));
             else {
                 TagMe.tag(question);
@@ -176,7 +174,7 @@ public class Main {
 
     private static void processArguments(String[] args) {
         if (args.length > 4) {
-            System.out.printf("USAGE: \tjava Main [path to .JSON or .TXT file]\n\tjava Main [path to .JSON or .TXT file] [start index]\n\t" +
+            System.out.printf("USAGE:\tjava Main [path to .JSON or .TXT file]\n\tjava Main [path to .JSON or .TXT file] [start index]\n\t" +
                     "java Main [path to .JSON or .TXT file] [start index] [end index]\n\tjava Main [path to .JSON or .TXT file] [start index] " +
                     "[end index] [rho threshold]\n");
             System.exit(1);
@@ -191,9 +189,8 @@ public class Main {
         }
         filepath = args[0];
         if (args[0].contains(".txt")) {
-            if (args[0].contains("TagMe")) isTagMe = true;
-            if (args[0].contains("FOFE")) isFOFE = true;
             isRetrieved = true;
+            if (args[0].contains("TagMe")) isTagged = true;
         }
     }
 }

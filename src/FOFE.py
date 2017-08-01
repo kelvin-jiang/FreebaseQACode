@@ -1,6 +1,22 @@
-import sys, json, requests
+import sys, json, requests, re
 
-url = 'http://www.eecs.yorku.ca/~nana/info.php'
+def matchwiki(tag, count):
+    wikiURL = 'https://en.wikipedia.org/w/index.php?fulltext=1&search=' + tag
+    results = []
+
+    r = requests.get(wikiURL)
+    rawhtml = r.text
+    start = rawhtml.find('<ul class=\'mw-search-results\'>')
+    end = rawhtml.find('</ul>', start)
+    rawresults = rawhtml[start:end]
+    for iteration in re.finditer('title="', rawresults):
+        index = rawresults.find('"', iteration.end())
+        title = rawresults[iteration.end():index]
+        results.append(title.lower().strip())
+    return results[0:count]
+
+
+fofeURL = 'http://www.eecs.yorku.ca/~nana/info.php'
 data = {
     'mode' : 'dev',
     'lang' : 'English'
@@ -12,10 +28,12 @@ output_filepath = input_filepath[:index] + "-FOFE" + input_filepath[index:] #fil
 with open(input_filepath, 'r') as inputfile:
     with open(output_filepath, 'w') as outputfile:
         for line in inputfile:
-            data['text'] = line.split(" | ")[0]  # set text in data to question to be tagged
-            r = requests.post(url, data=data)
+            # queries the website
+            data['text'] = line.split(" | ")[0]  # set text in data to the question to be tagged
+            r = requests.post(fofeURL, data=data)
             rawjson = json.loads(r.text)
 
+            # processes outputted json from website
             indicators = ['first_pass_hidden', 'first_pass_shown']
             entities = []
             tags = []
@@ -27,19 +45,14 @@ with open(input_filepath, 'r') as inputfile:
                         entity.append(rawjson[indicator][index]['text'])
                         if len(entity) == 5 and "NOM" not in entity[1]:
                             tags.append(entity)
-
             entities = []
             for tag in tags:
-                #entity = []
                 entity = tag[4][tag[2][0][0]:tag[2][0][1]]
-                #entity.append(tag[3])
                 entities.append(entity)
 
-            # TODO: need to search entity in wikipedia and append that
             extension = ""
             for entity in entities:
-                extension = extension + " | " + entity + " | " + entity
+                extension = extension + " | " + matchwiki(entity, 1)[0] + " | " + entity
             line = line.rstrip() + extension
-            print(line)
             outputfile.write(line  + "\n")
 print("FOFE TAGGING COMPLETE")
