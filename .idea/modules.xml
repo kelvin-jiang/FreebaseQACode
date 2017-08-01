@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/QAinFreebase.iml" filepath="$PROJECT_DIR$/QAinFreebase.iml" />
+      <module fileurl="file://$PROJECT_DIR$/FreebaseQA.iml" filepath="$PROJECT_DIR$/FreebaseQA.iml" />
     </modules>
   </component>
 </project>
