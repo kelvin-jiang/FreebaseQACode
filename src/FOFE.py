@@ -1,4 +1,4 @@
-import sys, json, requests, re
+import io, json, re, requests, sys
 
 def matchwiki(tag, count):
     wikiURL = 'https://en.wikipedia.org/w/index.php?fulltext=1&search=' + tag
@@ -25,8 +25,8 @@ input_filepath = sys.argv[1]
 index = input_filepath.find(".txt")
 output_filepath = input_filepath[:index] + "-FOFE" + input_filepath[index:] #filename.txt -> filename-fofe.txt
 
-with open(input_filepath, 'r') as inputfile:
-    with open(output_filepath, 'w') as outputfile:
+with io.open(input_filepath, 'r', encoding='utf_8') as inputfile:
+    with io.open(output_filepath, 'w', encoding='utf_8') as outputfile:
         for line in inputfile:
             # queries the website
             data['text'] = line.split(" | ")[0]  # set text in data to the question to be tagged

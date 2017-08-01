@@ -1,13 +1,12 @@
 //put -verbose:gc in VM options in Configurations to print GC data
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 public class Main {
     //---STATIC VARIABLES---
     private static String filepath;
+    private static final String configfilepath = "config.properties";
     private static boolean isRetrieved = false;
     private static boolean isTagged = false;
     private static int startIndex = 0;
@@ -20,7 +19,10 @@ public class Main {
         //---LOCAL OBJECTS AND FIELDS---
         List<Map<String, String>> tagsBank = new ArrayList<>();
         String question, answer;
-        FreebaseDBHandler db = new FreebaseDBHandler();
+        String dbURL = null;
+        String dbUser = null;
+        String dbPass = null;
+        FreebaseDBHandler db;
         List<String> IDsList = new ArrayList<>(); //placeholder list for nameAlias2IDs method
         Map<String, String> tags = new HashMap<>(); //uses a hash structure to ensure unique tags
         String spot; //stores a tag's corresponding spot when the tag get removed
@@ -38,6 +40,20 @@ public class Main {
 	    long previousTime = System.currentTimeMillis();
 
         //---FUNCTIONS---
+        try {
+            Properties prop = new Properties();
+            InputStream input = new FileInputStream(configfilepath);
+            prop.load(input);
+            dbURL = prop.getProperty("dbURL");
+            dbUser = prop.getProperty("dbUser");
+            dbPass = prop.getProperty("dbPass");
+            input.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        db = new FreebaseDBHandler(dbURL, dbUser, dbPass);
+
         processArguments(args);
         if (isRetrieved) {
             try {

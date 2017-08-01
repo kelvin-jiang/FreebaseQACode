@@ -43,23 +43,6 @@ public class MySQLHandler {
         }
     }
 
-    //parse and return a range of columns up to int numOfColumns (starts from 1)
-    public List<List<String>> parseQueryResult(int numOfColumns) {
-        result2DList.clear();
-        try {
-            while (queryResult.next()) {
-                List<String> row = new ArrayList<>(numOfColumns);
-                for (int i = 1; i <= numOfColumns; i++) {
-                    row.add(queryResult.getString(i));
-                }
-                result2DList.add(row);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return result2DList;
-    }
-
     //parse and return a single column, int column (starts from 1)
     public List<String> singleQueryResult(int column) {
         resultList.clear();
