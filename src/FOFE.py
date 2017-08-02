@@ -25,13 +25,18 @@ input_filepath = sys.argv[1]
 index = input_filepath.find(".txt")
 output_filepath = input_filepath[:index] + "-FOFE" + input_filepath[index:] #filename.txt -> filename-fofe.txt
 
-with io.open(input_filepath, 'r', encoding='utf_8') as inputfile:
-    with io.open(output_filepath, 'w', encoding='utf_8') as outputfile:
+with io.open(input_filepath, 'r', encoding='utf-8') as inputfile:
+    with io.open(output_filepath, 'w', encoding='utf-8') as outputfile:
         for line in inputfile:
             # queries the website
             data['text'] = line.split(" | ")[0]  # set text in data to the question to be tagged
             r = requests.post(fofeURL, data=data)
-            rawjson = json.loads(r.text, encoding='utf_8')
+            try:
+                rawjson = json.loads(r.content, strict=False)
+            except json.decoder.JSONDecodeError:  # could not solve the error caused by '%' character in question, instead the question is skipped
+                outputfile.write(line)
+                print(line)
+                continue
 
             # processes outputted json from website
             indicators = ['first_pass_hidden', 'first_pass_shown']
