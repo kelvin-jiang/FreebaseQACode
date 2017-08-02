@@ -32,10 +32,10 @@ with io.open(input_filepath, 'r', encoding='utf-8') as inputfile:
             data['text'] = line.split(" | ")[0]  # set text in data to the question to be tagged
             r = requests.post(fofeURL, data=data)
             try:
-                rawjson = json.loads(r.content, strict=False)
+                rawjson = json.loads(r.text, strict=False)
             except json.decoder.JSONDecodeError:  # could not solve the error caused by '%' character in question, instead the question is skipped
                 outputfile.write(line)
-                print(line)
+                print(line.rstrip())
                 continue
 
             # processes outputted json from website
@@ -57,7 +57,11 @@ with io.open(input_filepath, 'r', encoding='utf-8') as inputfile:
 
             extension = ""
             for entity in entities:
-                extension = extension + " | " + matchwiki(entity, 1)[0] + " | " + entity
+                wikientity = matchwiki(entity, 1)
+                if len(wikientity) > 0:  # if there are wiki matches
+                    extension = extension + " | " + matchwiki(entity, 1)[0] + " | " + entity
+                else:  # if there are no wiki matches
+                    extension = extension + " | " + entity + " | " + entity
             line = line.rstrip() + extension
             print(line)
             outputfile.write(line  + "\n")
