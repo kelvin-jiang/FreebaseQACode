@@ -31,7 +31,7 @@ with io.open(input_filepath, 'r', encoding='utf_8') as inputfile:
             # queries the website
             data['text'] = line.split(" | ")[0]  # set text in data to the question to be tagged
             r = requests.post(fofeURL, data=data)
-            rawjson = json.loads(r.text)
+            rawjson = json.loads(r.text, encoding='utf_8')
 
             # processes outputted json from website
             indicators = ['first_pass_hidden', 'first_pass_shown']
@@ -54,5 +54,6 @@ with io.open(input_filepath, 'r', encoding='utf_8') as inputfile:
             for entity in entities:
                 extension = extension + " | " + matchwiki(entity, 1)[0] + " | " + entity
             line = line.rstrip() + extension
+            print(line)
             outputfile.write(line  + "\n")
 print("FOFE TAGGING COMPLETE")
