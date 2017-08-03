@@ -59,7 +59,7 @@ with io.open(input_filepath, 'r', encoding='utf-8') as inputfile:
             for entity in entities:
                 wikientity = matchwiki(entity, 1)
                 if len(wikientity) > 0:  # if there are wiki matches
-                    extension = extension + " | " + matchwiki(entity, 1)[0] + " | " + entity
+                    extension = extension + " | " + wikientity[0] + " | " + entity
                 else:  # if there are no wiki matches
                     extension = extension + " | " + entity + " | " + entity
             line = line.rstrip() + extension

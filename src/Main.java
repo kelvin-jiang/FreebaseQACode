@@ -5,8 +5,12 @@ import java.util.*;
 
 public class Main {
     //---STATIC VARIABLES---
+    private static String freebaseconfigpath;
+    private static String matchesDBconfigpath;
     private static String filepath;
-    private static final String configfilepath = "config.properties";
+    private static String dbURL = null;
+    private static String dbUser = null;
+    private static String dbPass = null;
     private static boolean isRetrieved = false;
     private static boolean isTagged = false;
     private static int startIndex = 0;
@@ -19,10 +23,8 @@ public class Main {
         //---LOCAL OBJECTS AND FIELDS---
         List<Map<String, String>> tagsBank = new ArrayList<>();
         String question, answer;
-        String dbURL = null;
-        String dbUser = null;
-        String dbPass = null;
         FreebaseDBHandler db;
+        MatchesDBHandler mdb;
         List<String> IDsList = new ArrayList<>(); //placeholder list for nameAlias2IDs method
         Map<String, String> tags = new HashMap<>(); //uses a hash structure to ensure unique tags
         String spot; //stores a tag's corresponding spot when the tag get removed
@@ -40,21 +42,13 @@ public class Main {
 	    long previousTime = System.currentTimeMillis();
 
         //---FUNCTIONS---
-        try {
-            Properties prop = new Properties();
-            InputStream input = new FileInputStream(configfilepath);
-            prop.load(input);
-            dbURL = prop.getProperty("dbURL");
-            dbUser = prop.getProperty("dbUser");
-            dbPass = prop.getProperty("dbPass");
-            input.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-        db = new FreebaseDBHandler(dbURL, dbUser, dbPass);
-
         processArguments(args);
+
+        readConfigFile(freebaseconfigpath);
+        db = new FreebaseDBHandler(dbURL, dbUser, dbPass);
+        readConfigFile(matchesDBconfigpath);
+        mdb = new MatchesDBHandler(dbURL, dbUser, dbPass);
+
         if (isRetrieved) {
             try {
                 BufferedReader reader = new BufferedReader(new FileReader(filepath));
@@ -147,9 +141,11 @@ public class Main {
                             match.add(null);
                             match.add(triple.getObject());
                             if (!matches.contains(match)) {
-                                matches.add(match);
                                 matched = true;
-				                System.out.printf("MATCHED1: %s | %s | %s | %s\n", tags.get(tag), triple.toString(), question, answer);
+                                matches.add(match);
+                                mdb.addRow(triple.getSubject(), triple.getSubjectID(), triple.getPredicate(), null, triple.getObjectID(),
+                                        triple.getObject(), question, -1);
+                                System.out.printf("MATCHED1: %s | %s | %s | %s\n", tags.get(tag), triple.toString(), question, answer);
                             }
                         }
                         else if (mediatorTriples.containsKey(triple.getObjectID())) { //if the object of the triple has an ID matching a mediator
@@ -161,8 +157,10 @@ public class Main {
                             match.add(mediatorTriple.getPredicate());
                             match.add(mediatorTriple.getSubject());
                             if (!matches.contains(match)) {
-                                matches.add(match);
 				                matched = true;
+                                matches.add(match);
+                                mdb.addRow(triple.getSubject(), triple.getSubjectID(), triple.getPredicate(), mediatorTriple.getPredicate(),
+                                        mediatorTriple.getSubjectID(), mediatorTriple.getSubject(), question, -1);
                                 System.out.printf("MATCHED2: %s | %s | %s | %s | %s\n", tags.get(tag), triple.toString(),
                                         mediatorTriple.toReverseString(), question, answer);
                             }
@@ -189,24 +187,43 @@ public class Main {
     }
 
     private static void processArguments(String[] args) {
-        if (args.length > 4) {
-            System.out.printf("USAGE:\tjava Main [path to .JSON or .TXT file]\n\tjava Main [path to .JSON or .TXT file] [start index]\n\t" +
-                    "java Main [path to .JSON or .TXT file] [start index] [end index]\n\tjava Main [path to .JSON or .TXT file] [start index] " +
-                    "[end index] [rho threshold]\n");
+        if (args.length > 6) {
+            System.out.printf("USAGE:\tjava Main [path to Freebase config file] [path to MatchesDB config file] [path to .JSON or .TXT file]\n\t" +
+                    "java Main [path to Freebase config file] [path to MatchesDB config file] [path to .JSON or .TXT file] [start index]\n\t" +
+                    "java Main [path to Freebase config file] [path to MatchesDB config file] [path to .JSON or .TXT file] [start index] [end index]\n\t" +
+                    "java Main [path to Freebase config file] [path to MatchesDB config file] [path to .JSON or .TXT file] [start index] [end index] [rho threshold]\n");
             System.exit(1);
         }
-        if (args.length >= 2) {
-            startIndex = Integer.parseInt(args[1]);
-            if (args.length >= 3) {
-                endIndex = Integer.parseInt(args[2]);
-                if (args.length == 4)
-                    rhoThreshold = Double.parseDouble(args[3]);
+        if (args.length >= 4) {
+            startIndex = Integer.parseInt(args[3]);
+            if (args.length >= 5) {
+                endIndex = Integer.parseInt(args[4]);
+                if (args.length == 6)
+                    rhoThreshold = Double.parseDouble(args[5]);
             }
         }
-        filepath = args[0];
-        if (args[0].contains(".txt")) {
+        freebaseconfigpath = args[0];
+        matchesDBconfigpath = args[1];
+        filepath = args[2];
+        if (filepath.contains(".txt")) {
             isRetrieved = true;
-            if (args[0].contains("TagMe")) isTagged = true;
+            if (filepath.contains("TagMe")) isTagged = true;
+        }
+    }
+
+    private static void readConfigFile(String configpath) {
+        try {
+            Properties prop = new Properties();
+            InputStream input = new FileInputStream(configpath);
+            prop.load(input);
+            dbURL = prop.getProperty("dbURL");
+            dbUser = prop.getProperty("dbUser");
+            dbPass = prop.getProperty("dbPass");
+            input.close();
+            prop.clear();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
         }
     }
 }
