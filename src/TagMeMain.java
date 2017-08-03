@@ -18,13 +18,16 @@ public class TagMeMain extends TagMe {
             while ((line = reader.readLine()) != null) { //reads all QA lines from text file
                 qa = line.split(" \\| ");
                 writer.write(qa[0] + " | " + qa[1]);
+                System.out.print("QUESTION. " + qa[0] + " | " + qa[1]);
                 TagMe.tag(qa[0]);
                 tags = TagMe.getTags();
                 if (tags.size() != 0) {
                     for (String tag : tags.keySet()) {
                         writer.write(" | " + tag + " | " + tags.get(tag));
+                        System.out.print(" | " + tag + " | " + tags.get(tag));
                     }
                 }
+                System.out.print("\n");
                 writer.newLine();
             }
             reader.close();
