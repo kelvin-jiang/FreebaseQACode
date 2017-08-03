@@ -1,5 +1,4 @@
 //put -verbose:gc in VM options in Configurations to print GC data
-
 import java.io.*;
 import java.util.*;
 
@@ -144,7 +143,7 @@ public class Main {
                                 matched = true;
                                 matches.add(match);
                                 mdb.addRow(triple.getSubject(), triple.getSubjectID(), triple.getPredicate(), null, triple.getObjectID(),
-                                        triple.getObject(), question, -1);
+                                        triple.getObject(), question);
                                 System.out.printf("MATCHED1: %s | %s | %s | %s\n", tags.get(tag), triple.toString(), question, answer);
                             }
                         }
@@ -160,7 +159,7 @@ public class Main {
 				                matched = true;
                                 matches.add(match);
                                 mdb.addRow(triple.getSubject(), triple.getSubjectID(), triple.getPredicate(), mediatorTriple.getPredicate(),
-                                        mediatorTriple.getSubjectID(), mediatorTriple.getSubject(), question, -1);
+                                        mediatorTriple.getSubjectID(), mediatorTriple.getSubject(), question);
                                 System.out.printf("MATCHED2: %s | %s | %s | %s | %s\n", tags.get(tag), triple.toString(),
                                         mediatorTriple.toReverseString(), question, answer);
                             }
