@@ -30,6 +30,7 @@ public class TagMe {
     public static void startWebClient() {
         client = new WebClient();
         client.getOptions().setUseInsecureSSL(true);
+        client.getOptions().setThrowExceptionOnFailingStatusCode(false);
     }
 
     public static void tag(String question) {
@@ -71,7 +72,8 @@ public class TagMe {
             client.close();
             json.clear();
             annotations.clear();
-            annotationElement.clear();
+            if (annotationElement != null) //in case FailingHttpStatusCodeException is thrown by HtmlUnit
+                annotationElement.clear();
         } catch (ParseException | IOException e) {
             e.printStackTrace();
         }
