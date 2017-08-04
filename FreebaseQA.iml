@@ -2,7 +2,7 @@
 <module type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="Python" name="Python">
-      <configuration sdkName="Python 3.6.2" />
+      <configuration sdkName="Python 2.7.10" />
     </facet>
   </component>
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
@@ -39,6 +39,5 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="Python 3.6.2 interpreter library" level="application" />
   </component>
 </module>
