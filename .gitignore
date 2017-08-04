@@ -1,0 +1,6 @@
+/out
+.idea
+config1.properties
+config2.properties
+config3.properties
+*.iml
