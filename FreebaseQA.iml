@@ -39,5 +39,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="Python 2.7.10 interpreter library" level="application" />
   </component>
 </module>

@@ -186,7 +186,7 @@ public class Main {
     }
 
     private static void processArguments(String[] args) {
-        if (args.length > 6) {
+        if (args.length == 0 || args.length > 6) {
             System.out.printf("USAGE:\tjava Main [path to Freebase config file] [path to MatchesDB config file] [path to .JSON or .TXT file]\n\t" +
                     "java Main [path to Freebase config file] [path to MatchesDB config file] [path to .JSON or .TXT file] [start index]\n\t" +
                     "java Main [path to Freebase config file] [path to MatchesDB config file] [path to .JSON or .TXT file] [start index] [end index]\n\t" +
