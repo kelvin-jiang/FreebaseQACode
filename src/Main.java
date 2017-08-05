@@ -90,6 +90,7 @@ public class Main {
             if (isTagged)
                 tags.putAll(tagsBank.get(i));
             else {
+		System.out.println("QUERYING TagMe...");
                 TagMe.tag(question);
                 tags.putAll(TagMe.getTags());
             }
