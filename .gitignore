@@ -1,6 +1,5 @@
 /out
 .idea
-/data/verified-wikipedia-dev*
 config1.properties
 config2.properties
 *.iml
