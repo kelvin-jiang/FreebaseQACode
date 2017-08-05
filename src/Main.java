@@ -4,8 +4,7 @@ import java.util.*;
 
 public class Main {
     //---STATIC VARIABLES---
-    private static String freebaseconfigpath;
-    private static String matchesDBconfigpath;
+    private static String configpath;
     private static String filepath;
     private static String dbURL = null;
     private static String dbUser = null;
@@ -23,7 +22,6 @@ public class Main {
         List<Map<String, String>> tagsBank = new ArrayList<>();
         String question, answer;
         FreebaseDBHandler db;
-        MatchesDBHandler mdb;
         List<String> IDsList = new ArrayList<>(); //placeholder list for nameAlias2IDs method
         Map<String, String> tags = new HashMap<>(); //uses a hash structure to ensure unique tags
         String spot; //stores a tag's corresponding spot when the tag get removed
@@ -35,18 +33,16 @@ public class Main {
         Set<String> answerIDs = new HashSet<>();
         Set<List<String>> matches = new HashSet<>(); //matches are saved uniquely based on subject, predicate, mediatorPredicate, object
         List<String> match = new ArrayList<>();
-	    boolean matched;
+	    //variables for console output
+        boolean matched;
 	    int uniqueMatches = 0;
 	    long startTime = System.currentTimeMillis();
 	    long previousTime = System.currentTimeMillis();
 
         //---FUNCTIONS---
-        processArguments(args);
-
-        readConfigFile(freebaseconfigpath);
+        processArgs(args);
+        readConfigFile();
         db = new FreebaseDBHandler(dbURL, dbUser, dbPass);
-        readConfigFile(matchesDBconfigpath);
-        mdb = new MatchesDBHandler(dbURL, dbUser, dbPass);
 
         if (isRetrieved) {
             try {
@@ -142,8 +138,6 @@ public class Main {
                             if (!matches.contains(match)) {
                                 matched = true;
                                 matches.add(match);
-                                mdb.addRow(triple.getSubject(), triple.getSubjectID(), triple.getPredicate(), null, triple.getObjectID(),
-                                        triple.getObject(), question);
                                 System.out.printf("MATCHED1: %s | %s | %s | %s\n", tags.get(tag), triple.toString(), question, answer);
                             }
                         }
@@ -158,8 +152,6 @@ public class Main {
                             if (!matches.contains(match)) {
 				                matched = true;
                                 matches.add(match);
-                                mdb.addRow(triple.getSubject(), triple.getSubjectID(), triple.getPredicate(), mediatorTriple.getPredicate(),
-                                        mediatorTriple.getSubjectID(), mediatorTriple.getSubject(), question);
                                 System.out.printf("MATCHED2: %s | %s | %s | %s | %s\n", tags.get(tag), triple.toString(),
                                         mediatorTriple.toReverseString(), question, answer);
                             }
@@ -185,32 +177,31 @@ public class Main {
         tagsBank.clear();
     }
 
-    private static void processArguments(String[] args) {
-        if (args.length == 0 || args.length > 6) {
-            System.out.printf("USAGE:\tjava Main [path to Freebase config file] [path to MatchesDB config file] [path to .JSON or .TXT file]\n\t" +
-                    "java Main [path to Freebase config file] [path to MatchesDB config file] [path to .JSON or .TXT file] [start index]\n\t" +
-                    "java Main [path to Freebase config file] [path to MatchesDB config file] [path to .JSON or .TXT file] [start index] [end index]\n\t" +
-                    "java Main [path to Freebase config file] [path to MatchesDB config file] [path to .JSON or .TXT file] [start index] [end index] [rho threshold]\n");
+    private static void processArgs(String[] args) {
+        if (args.length == 0 || args.length > 5) {
+            System.out.printf("USAGE:\tjava Main [path to Freebase config file] [path to .JSON or .TXT file]\n\t" +
+                    "java Main [path to Freebase config file] [path to .JSON or .TXT file] [start index]\n\t" +
+                    "java Main [path to Freebase config file] [path to .JSON or .TXT file] [start index] [end index]\n\t" +
+                    "java Main [path to Freebase config file] [path to .JSON or .TXT file] [start index] [end index] [rho threshold]\n");
             System.exit(1);
         }
-        if (args.length >= 4) {
-            startIndex = Integer.parseInt(args[3]);
-            if (args.length >= 5) {
-                endIndex = Integer.parseInt(args[4]);
-                if (args.length == 6)
-                    rhoThreshold = Double.parseDouble(args[5]);
+        if (args.length >= 3) {
+            startIndex = Integer.parseInt(args[2]);
+            if (args.length >= 4) {
+                endIndex = Integer.parseInt(args[3]);
+                if (args.length == 5)
+                    rhoThreshold = Double.parseDouble(args[4]);
             }
         }
-        freebaseconfigpath = args[0];
-        matchesDBconfigpath = args[1];
-        filepath = args[2];
+        configpath = args[0];
+        filepath = args[1];
         if (filepath.contains(".txt")) {
             isRetrieved = true;
             if (filepath.contains("TagMe")) isTagged = true;
         }
     }
 
-    private static void readConfigFile(String configpath) {
+    private static void readConfigFile() {
         try {
             Properties prop = new Properties();
             InputStream input = new FileInputStream(configpath);
