@@ -1,5 +1,10 @@
 /out
 .idea
+*.iml
 config1.properties
 config2.properties
-*.iml
+/data/verified-wikipedia-dev*
+/src/Name2FreebaseID.py
+/src/QuizBallsCrawler.py
+/src/QuizZoneCrawler.py
+/src/Wiki2FreebaseID.py
