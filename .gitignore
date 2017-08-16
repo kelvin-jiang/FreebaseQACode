@@ -3,7 +3,7 @@
 *.iml
 config1.properties
 config2.properties
-/data/verified-wikipedia-dev*
+/data
 /src/Name2FreebaseID.py
 /src/QuizBallsCrawler.py
 /src/QuizZoneCrawler.py
