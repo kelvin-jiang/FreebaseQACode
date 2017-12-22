@@ -3,6 +3,7 @@
 *.iml
 config1.properties
 config2.properties
+data.zip
 /data
 /src/Name2FreebaseID.py
 /src/QuizBallsCrawler.py
